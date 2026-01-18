@@ -4,6 +4,85 @@ CDN DNS Performance Tester with Xtream Codes API Integration
 Tests multiple CDN endpoints for latency, jitter, throughput, and network characteristics
 """
 
+import sys
+import subprocess
+import importlib.util
+import os
+
+def check_python_version():
+    """Check if Python version is 3.7 or higher"""
+    if sys.version_info < (3, 7):
+        print("❌ ERROR: Python 3.7 or higher is required")
+        print(f"   Current version: {sys.version}")
+        print("\n📥 Please install Python 3.7+ from https://www.python.org/downloads/")
+        input("\nPress Enter to exit...")
+        sys.exit(1)
+    print(f"✅ Python version: {sys.version.split()[0]}")
+
+def check_and_install_dependencies():
+    """Check for required packages and install if missing"""
+    required_packages = {
+        'aiohttp': 'aiohttp',
+    }
+    
+    print("\n" + "="*80)
+    print("CHECKING DEPENDENCIES")
+    print("="*80)
+    
+    missing_packages = []
+    
+    for import_name, pip_name in required_packages.items():
+        spec = importlib.util.find_spec(import_name)
+        if spec is None:
+            print(f"❌ {pip_name} - NOT INSTALLED")
+            missing_packages.append(pip_name)
+        else:
+            print(f"✅ {pip_name} - installed")
+    
+    if missing_packages:
+        print("\n" + "="*80)
+        print("INSTALLING MISSING PACKAGES")
+        print("="*80)
+        print(f"\n📦 Installing: {', '.join(missing_packages)}\n")
+        
+        try:
+            subprocess.check_call([
+                sys.executable, 
+                '-m', 
+                'pip', 
+                'install', 
+                '--quiet',
+                '--disable-pip-version-check'
+            ] + missing_packages)
+            
+            print("\n✅ All packages installed successfully!")
+            
+        except subprocess.CalledProcessError as e:
+            print(f"\n❌ ERROR: Failed to install packages")
+            print(f"   {str(e)}")
+            print("\n🔧 Try running this command manually:")
+            print(f"   pip install {' '.join(missing_packages)}")
+            input("\nPress Enter to exit...")
+            sys.exit(1)
+        except Exception as e:
+            print(f"\n❌ UNEXPECTED ERROR: {str(e)}")
+            print("\n🔧 Try running this command manually:")
+            print(f"   pip install {' '.join(missing_packages)}")
+            input("\nPress Enter to exit...")
+            sys.exit(1)
+    else:
+        print("\n✅ All required packages are installed!")
+    
+    print("="*80 + "\n")
+
+# Run checks before importing dependencies
+print("="*80)
+print("CDN PERFORMANCE TESTER - STARTUP CHECK")
+print("="*80)
+check_python_version()
+check_and_install_dependencies()
+
+# Now import the packages
 import asyncio
 import aiohttp
 import time
@@ -530,7 +609,7 @@ async def main():
     args = parser.parse_args()
     
     # Interactive prompts
-    print("="*80)
+    print("\n" + "="*80)
     print("CDN PERFORMANCE TESTER with Xtream Codes Integration")
     print("="*80)
     print()
@@ -549,6 +628,7 @@ async def main():
     
     if not args.username or not args.password or not args.dns_entries:
         print("\n❌ Error: Username, password, and DNS entries are required!")
+        input("\nPress Enter to exit...")
         return
     
     # Use first DNS for category/channel selection
@@ -557,6 +637,7 @@ async def main():
     
     if not selected_channels:
         print("\n❌ No channels selected. Exiting.")
+        input("\nPress Enter to exit...")
         return
     
     print("\n" + "="*80)
@@ -572,6 +653,7 @@ async def main():
     
     if not results:
         print("\n❌ No results collected.")
+        input("\nPress Enter to exit...")
         return
     
     # Generate and print report
@@ -580,6 +662,17 @@ async def main():
     
     # Save to CSV
     tester.save_to_csv(results, args.output)
+    
+    print("\n✅ Testing complete!")
+    input("\nPress Enter to exit...")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Testing interrupted by user")
+        input("\nPress Enter to exit...")
+    except Exception as e:
+        print(f"\n\n❌ UNEXPECTED ERROR: {str(e)}")
+        print("\n🔧 Please report this error if it persists")
+        input("\nPress Enter to exit...")
