@@ -56,7 +56,7 @@ AVAILABLE CATEGORIES
 
 1. **Download the script:**
    ```bash
-   git clone https://github.com/cage47/cdn-performance-tester.git
+   git clone https://github.com/cage47/IPTV_CDN_Tester.git
    cd cdn-performance-tester
    ```
 
@@ -268,7 +268,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ### Development Setup
 
 ```bash
-git clone https://github.com/cage47/cdn-performance-tester.git
+git clone https://github.com/cage47/IPTV_CDN_Tester.git
 cd cdn-performance-tester
 pip install aiohttp
 ```
