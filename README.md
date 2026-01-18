@@ -156,7 +156,7 @@ At the end, you'll get a ranked summary:
 CDN PERFORMANCE TEST REPORT
 ================================================================================
 
-#1 - http://cf.its-cdn.me
+#1 - http://cdn1.me
 --------------------------------------------------------------------------------
 IP Address: 104.21.45.123
 Hosting Provider: Cloudflare
@@ -169,7 +169,7 @@ Average Performance:
   Throughput: 145.32Mbps
   Success Rate: 10/10 channels
 
-#2 - http://pro.business-cdn.me
+#2 - http://cdn2.me
 ...
 ```
 
