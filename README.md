@@ -102,13 +102,13 @@ python cdn_tester.py \
   --output results.csv
 ```
 
-### Example with Real Data
+### Example
 
 ```bash
 python cdn_tester.py \
   --username x12334 \
   --password p12345 \
-  --dns-entries http://bye53016.cdngold.me http://pro.business-cdn.me http://cf.its-cdn.me \
+  --dns-entries http://cdn1.me http://cdn2.me http://cdn3.me \
   --user-agent tivimate
 ```
 
