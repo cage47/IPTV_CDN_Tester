@@ -1,3 +1,13 @@
+## 🎉 Latest Release - v2.1.0
+
+**What's New:**
+- 🔥 **10x Faster Testing** - Concurrent channel testing
+- 🚫 **Cloudflare Detection** - Identifies ToS violation blocks
+- 📝 **Multiline DNS Entry** - Up to 50 DNS entries
+- 🔄 **Loop Mode** - Keep credentials between tests
+
+[View Full Release Notes](https://github.com/cage47/IPTV_CDN_Tester/releases/tag/v2.1.0)
+
 # 🚀 CDN Performance Tester
 
 **Test and compare multiple CDN endpoints for optimal IPTV streaming performance**
