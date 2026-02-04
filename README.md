@@ -6,7 +6,6 @@
 - 📝 **Multiline DNS Entry** - Up to 50 DNS entries
 - 🔄 **Loop Mode** - Keep credentials between tests
 
-[View Full Release Notes](https://github.com/cage47/IPTV_CDN_Tester/releases/tag/v2.1.0)
 
 # 🚀 CDN Performance Tester
 
