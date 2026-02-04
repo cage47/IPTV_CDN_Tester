@@ -45,6 +45,7 @@ def check_and_install_dependencies():
         print("="*80)
         print(f"\n📦 Installing: {', '.join(missing_packages)}\n")
         
+        # Try standard install first
         try:
             subprocess.check_call([
                 sys.executable, 
@@ -57,13 +58,33 @@ def check_and_install_dependencies():
             
             print("\n✅ All packages installed successfully!")
             
-        except subprocess.CalledProcessError as e:
-            print(f"\n❌ ERROR: Failed to install packages")
-            print(f"   {str(e)}")
-            print("\n🔧 Try running this command manually:")
-            print(f"   pip install {' '.join(missing_packages)}")
-            input("\nPress Enter to exit...")
-            sys.exit(1)
+        except subprocess.CalledProcessError:
+            # Try with --break-system-packages for Ubuntu/Debian
+            print("⚠️  Standard install failed, trying with --break-system-packages...")
+            try:
+                subprocess.check_call([
+                    sys.executable, 
+                    '-m', 
+                    'pip', 
+                    'install',
+                    '--break-system-packages',
+                    '--quiet',
+                    '--disable-pip-version-check'
+                ] + missing_packages)
+                
+                print("\n✅ All packages installed successfully!")
+                
+            except subprocess.CalledProcessError as e:
+                print(f"\n❌ ERROR: Failed to install packages")
+                print(f"   {str(e)}")
+                print("\n🔧 Try running this command manually:")
+                print(f"   pip install {' '.join(missing_packages)} --break-system-packages")
+                print("\n   Or use a virtual environment:")
+                print("   python3 -m venv venv")
+                print("   source venv/bin/activate  # On Windows: venv\\Scripts\\activate")
+                print(f"   pip install {' '.join(missing_packages)}")
+                input("\nPress Enter to exit...")
+                sys.exit(1)
         except Exception as e:
             print(f"\n❌ UNEXPECTED ERROR: {str(e)}")
             print("\n🔧 Try running this command manually:")
@@ -108,6 +129,7 @@ class TestResult:
     asn: Optional[str]
     geolocation: Optional[str]
     hosting_provider: Optional[str]
+    cloudflare_blocked: bool
     success_rate: float
     error_message: Optional[str] = None
 
@@ -117,10 +139,40 @@ class CDNTester:
         'vlc': 'VLC/3.0.18 LibVLC/3.0.18'
     }
     
+    # Known Cloudflare abuse redirect patterns
+    CLOUDFLARE_ABUSE_PATTERNS = [
+        'cloudflare-terms-of-service-abuse.com',
+        'cloudflare.com/cdn-cgi/trace',
+        'cloudflare.com/abuse',
+    ]
+    
     def __init__(self, username: str, password: str, user_agent: str = 'tivimate'):
         self.username = username
         self.password = password
         self.user_agent = self.USER_AGENTS.get(user_agent.lower(), self.USER_AGENTS['tivimate'])
+    
+    async def check_cloudflare_block(self, url: str, session: aiohttp.ClientSession) -> bool:
+        """Check if Cloudflare is blocking/redirecting the stream"""
+        headers = {'User-Agent': self.user_agent}
+        
+        try:
+            async with session.head(url, headers=headers, timeout=10, allow_redirects=False) as resp:
+                # Check for 302 redirect
+                if resp.status == 302:
+                    location = resp.headers.get('Location', '')
+                    # Check if redirected to Cloudflare abuse page
+                    if any(pattern in location.lower() for pattern in self.CLOUDFLARE_ABUSE_PATTERNS):
+                        return True
+                
+                # Check for Cloudflare server header with suspicious redirects
+                server = resp.headers.get('Server', '').lower()
+                if 'cloudflare' in server and resp.status in [302, 403, 503]:
+                    return True
+                    
+        except Exception:
+            pass
+        
+        return False
     
     async def get_xtream_categories(self, dns_entry: str, session: aiohttp.ClientSession) -> List[Dict]:
         """Fetch available live stream categories from Xtream API"""
@@ -326,8 +378,78 @@ class CDNTester:
         
         return None
     
+    async def test_single_channel(self, dns_entry: str, channel: Dict, session: aiohttp.ClientSession, 
+                                  ip_address: str, asn: str, geo: str, hosting: str) -> TestResult:
+        """Test a single channel (used for concurrent testing)"""
+        stream_id = channel.get('stream_id')
+        channel_name = channel.get('name', 'Unknown')
+        
+        url = f"{dns_entry}/live/{self.username}/{self.password}/{stream_id}.ts"
+        
+        # Check for Cloudflare blocking first
+        is_blocked = await self.check_cloudflare_block(url, session)
+        
+        if is_blocked:
+            return TestResult(
+                dns_entry=dns_entry,
+                channel_id=str(stream_id),
+                channel_name=channel_name,
+                timestamp=datetime.now().isoformat(),
+                avg_latency_ms=0,
+                jitter_ms=0,
+                throughput_mbps=0,
+                ip_address=ip_address,
+                asn=asn,
+                geolocation=geo,
+                hosting_provider=hosting,
+                cloudflare_blocked=True,
+                success_rate=0,
+                error_message="Cloudflare ToS violation block detected"
+            )
+        
+        # Measure latency and jitter
+        avg_latency, jitter = await self.measure_latency(url, session)
+        
+        if avg_latency is None:
+            return TestResult(
+                dns_entry=dns_entry,
+                channel_id=str(stream_id),
+                channel_name=channel_name,
+                timestamp=datetime.now().isoformat(),
+                avg_latency_ms=0,
+                jitter_ms=0,
+                throughput_mbps=0,
+                ip_address=ip_address,
+                asn=asn,
+                geolocation=geo,
+                hosting_provider=hosting,
+                cloudflare_blocked=False,
+                success_rate=0,
+                error_message="Connection failed"
+            )
+        
+        # Measure throughput
+        throughput = await self.measure_throughput(url, session)
+        
+        return TestResult(
+            dns_entry=dns_entry,
+            channel_id=str(stream_id),
+            channel_name=channel_name,
+            timestamp=datetime.now().isoformat(),
+            avg_latency_ms=round(avg_latency, 2),
+            jitter_ms=round(jitter, 2),
+            throughput_mbps=round(throughput, 2) if throughput else 0,
+            ip_address=ip_address,
+            asn=asn,
+            geolocation=geo,
+            hosting_provider=hosting,
+            cloudflare_blocked=False,
+            success_rate=100.0,
+            error_message=None
+        )
+    
     async def test_endpoint(self, dns_entry: str, channels: List[Dict], session: aiohttp.ClientSession) -> List[TestResult]:
-        """Test a single DNS endpoint with selected channels"""
+        """Test a single DNS endpoint with selected channels (concurrent)"""
         results = []
         
         # Resolve DNS
@@ -348,6 +470,7 @@ class CDNTester:
                     asn=None,
                     geolocation=None,
                     hosting_provider=None,
+                    cloudflare_blocked=False,
                     success_rate=0,
                     error_message="DNS resolution failed"
                 ))
@@ -361,65 +484,33 @@ class CDNTester:
         print(f"Hosting: {hosting or 'Unknown'}")
         print(f"ASN: {asn or 'Unknown'}, Location: {geo or 'Unknown'}")
         print(f"{'='*80}")
+        print(f"\n  📺 Testing {len(channels)} channels concurrently...\n")
         
-        # Test each channel
+        # Test all channels concurrently
+        tasks = []
         for channel in channels:
-            stream_id = channel.get('stream_id')
-            channel_name = channel.get('name', 'Unknown')
-            
-            url = f"{dns_entry}/live/{self.username}/{self.password}/{stream_id}.ts"
-            print(f"\n  📺 Testing: {channel_name} (ID: {stream_id})")
-            
-            # Measure latency and jitter
-            avg_latency, jitter = await self.measure_latency(url, session)
-            
-            if avg_latency is None:
-                results.append(TestResult(
-                    dns_entry=dns_entry,
-                    channel_id=str(stream_id),
-                    channel_name=channel_name,
-                    timestamp=datetime.now().isoformat(),
-                    avg_latency_ms=0,
-                    jitter_ms=0,
-                    throughput_mbps=0,
-                    ip_address=ip_address,
-                    asn=asn,
-                    geolocation=geo,
-                    hosting_provider=hosting,
-                    success_rate=0,
-                    error_message="Connection failed"
-                ))
-                continue
-            
-            # Measure throughput
-            throughput = await self.measure_throughput(url, session)
-            
-            result = TestResult(
-                dns_entry=dns_entry,
-                channel_id=str(stream_id),
-                channel_name=channel_name,
-                timestamp=datetime.now().isoformat(),
-                avg_latency_ms=round(avg_latency, 2),
-                jitter_ms=round(jitter, 2),
-                throughput_mbps=round(throughput, 2) if throughput else 0,
-                ip_address=ip_address,
-                asn=asn,
-                geolocation=geo,
-                hosting_provider=hosting,
-                success_rate=100.0,
-                error_message=None
-            )
-            
-            results.append(result)
-            print(f"     ✓ Latency: {result.avg_latency_ms}ms | Jitter: {result.jitter_ms}ms | Throughput: {result.throughput_mbps}Mbps")
+            task = self.test_single_channel(dns_entry, channel, session, ip_address, asn, geo, hosting)
+            tasks.append(task)
         
-        return results
+        # Wait for all tests to complete
+        results = await asyncio.gather(*tasks)
+        
+        # Display results
+        for result in results:
+            if result.cloudflare_blocked:
+                print(f"     🚫 {result.channel_name}: CLOUDFLARE BLOCKED")
+            elif result.success_rate > 0:
+                print(f"     ✓ {result.channel_name}: Latency: {result.avg_latency_ms}ms | Jitter: {result.jitter_ms}ms | Throughput: {result.throughput_mbps}Mbps")
+            else:
+                print(f"     ❌ {result.channel_name}: {result.error_message}")
+        
+        return list(results)
     
     async def run_tests(self, dns_entries: List[str], channels: List[Dict]) -> List[TestResult]:
         """Run tests on all DNS entries"""
         all_results = []
         
-        connector = aiohttp.TCPConnector(limit=10, force_close=True)
+        connector = aiohttp.TCPConnector(limit=50, force_close=True)  # Increased limit for concurrent requests
         timeout = aiohttp.ClientTimeout(total=30)
         
         async with aiohttp.ClientSession(connector=connector, timeout=timeout) as session:
@@ -446,8 +537,14 @@ class CDNTester:
         # Sort DNS entries by average performance
         dns_scores = {}
         for dns, res_list in by_dns.items():
-            successful = [r for r in res_list if r.success_rate > 0]
-            if successful:
+            # Check if any channels are Cloudflare blocked
+            blocked_count = sum(1 for r in res_list if r.cloudflare_blocked)
+            successful = [r for r in res_list if r.success_rate > 0 and not r.cloudflare_blocked]
+            
+            if blocked_count == len(res_list):
+                # All blocked - worst score
+                dns_scores[dns] = float('inf')
+            elif successful:
                 avg_latency = statistics.mean([r.avg_latency_ms for r in successful])
                 avg_throughput = statistics.mean([r.throughput_mbps for r in successful])
                 dns_scores[dns] = avg_latency - (avg_throughput * 10)
@@ -458,6 +555,8 @@ class CDNTester:
         
         for rank, (dns, score) in enumerate(sorted_dns, 1):
             res_list = by_dns[dns]
+            blocked_count = sum(1 for r in res_list if r.cloudflare_blocked)
+            
             report.append(f"#{rank} - {dns}")
             report.append("-" * 80)
             
@@ -467,7 +566,11 @@ class CDNTester:
                 report.append(f"ASN: {res_list[0].asn or 'Unknown'}")
                 report.append(f"Location: {res_list[0].geolocation or 'Unknown'}")
             
-            successful = [r for r in res_list if r.success_rate > 0]
+            # Show Cloudflare blocking status
+            if blocked_count > 0:
+                report.append(f"\n🚫 Cloudflare Blocked: {blocked_count}/{len(res_list)} channels")
+            
+            successful = [r for r in res_list if r.success_rate > 0 and not r.cloudflare_blocked]
             if successful:
                 avg_lat = statistics.mean([r.avg_latency_ms for r in successful])
                 avg_jit = statistics.mean([r.jitter_ms for r in successful])
@@ -595,6 +698,31 @@ async def interactive_category_selection(dns_entry: str, username: str, password
         print(f"\n✅ Selected {len(selected_channels)} channels for testing")
         return selected_channels
 
+def get_multiline_input(prompt: str, example: str = None, max_entries: int = 50) -> List[str]:
+    """Get multiline input from user, ending with empty line"""
+    print(prompt)
+    if example:
+        print(f"Example:\n{example}")
+    print(f"\nEnter values (one per line, max {max_entries}). Press Enter twice (empty line) when done:")
+    
+    lines = []
+    while True:
+        line = input().strip()
+        if not line:
+            if lines:  # Empty line signals end if we have at least one entry
+                break
+            else:
+                continue  # Ignore empty lines at the start
+        
+        lines.append(line)
+        
+        # Check if we've reached the limit
+        if len(lines) >= max_entries:
+            print(f"\n⚠️  Maximum of {max_entries} entries reached.")
+            break
+    
+    return lines
+
 async def main():
     parser = argparse.ArgumentParser(description='Test CDN DNS entries for streaming performance')
     parser.add_argument('--username', '-u', help='Stream username')
@@ -608,63 +736,149 @@ async def main():
     
     args = parser.parse_args()
     
-    # Interactive prompts
-    print("\n" + "="*80)
-    print("CDN PERFORMANCE TESTER with Xtream Codes Integration")
-    print("="*80)
-    print()
+    # Store credentials for reuse
+    saved_username = args.username
+    saved_password = args.password
     
-    if not args.username:
-        args.username = input("Enter username: ").strip()
-    
-    if not args.password:
-        args.password = input("Enter password: ").strip()
-    
-    if not args.dns_entries:
-        print("\nEnter DNS entries (separate each with a space):")
-        print("Example: http://cdn1.example.com http://cdn2.example.com")
-        dns_input = input("> ").strip()
-        args.dns_entries = dns_input.split()
-    
-    if not args.username or not args.password or not args.dns_entries:
-        print("\n❌ Error: Username, password, and DNS entries are required!")
-        input("\nPress Enter to exit...")
-        return
-    
-    # Use first DNS for category/channel selection
-    print(f"\n🎯 Using {args.dns_entries[0]} to fetch categories and channels...")
-    selected_channels = await interactive_category_selection(args.dns_entries[0], args.username, args.password)
-    
-    if not selected_channels:
-        print("\n❌ No channels selected. Exiting.")
-        input("\nPress Enter to exit...")
-        return
-    
-    print("\n" + "="*80)
-    print(f"Starting CDN Performance Tests...")
-    print(f"User Agent: {args.user_agent}")
-    print(f"DNS Entries: {len(args.dns_entries)}")
-    print(f"Channels: {len(selected_channels)}")
-    print(f"Output File: {args.output}")
-    print("="*80)
-    
-    tester = CDNTester(args.username, args.password, args.user_agent)
-    results = await tester.run_tests(args.dns_entries, selected_channels)
-    
-    if not results:
-        print("\n❌ No results collected.")
-        input("\nPress Enter to exit...")
-        return
-    
-    # Generate and print report
-    report = tester.generate_report(results)
-    print(report)
-    
-    # Save to CSV
-    tester.save_to_csv(results, args.output)
-    
-    print("\n✅ Testing complete!")
-    input("\nPress Enter to exit...")
+    while True:  # Main loop for testing multiple times
+        # Interactive prompts
+        print("\n" + "="*80)
+        print("CDN PERFORMANCE TESTER with Xtream Codes Integration")
+        print("="*80)
+        print()
+        
+        # Get or reuse credentials
+        if not saved_username:
+            saved_username = input("Enter username: ").strip()
+        else:
+            print(f"Username: {saved_username}")
+            change = input("Change username? (y/n): ").strip().lower()
+            if change == 'y':
+                saved_username = input("Enter new username: ").strip()
+        
+        if not saved_password:
+            saved_password = input("Enter password: ").strip()
+        else:
+            print(f"Password: {'*' * len(saved_password)}")
+            change = input("Change password? (y/n): ").strip().lower()
+            if change == 'y':
+                saved_password = input("Enter new password: ").strip()
+        
+        # Get DNS entries
+        if not args.dns_entries:
+            print("\n" + "="*80)
+            print("DNS ENTRY OPTIONS")
+            print("="*80)
+            print("1. Enter DNS entries on separate lines (one per line, max 50)")
+            print("2. Enter DNS entries on a single line (space-separated, max 50)")
+            
+            choice = input("\nChoose option (1 or 2, default=1): ").strip()
+            
+            if choice == '2':
+                print("\nEnter DNS entries (separate with spaces, max 50):")
+                print("Example: http://cdn1.example.com http://cdn2.example.com")
+                dns_input = input("> ").strip()
+                dns_entries = dns_input.split()[:50]  # Limit to 50
+                if len(dns_input.split()) > 50:
+                    print(f"⚠️  Limited to first 50 DNS entries")
+            else:
+                # Multiline input (default)
+                dns_entries = get_multiline_input(
+                    "\nEnter DNS entries (one per line):",
+                    "http://pro.player-mate3.me/\nhttp://cdn-platine.rest/\nhttp://cdn-platine.store/",
+                    max_entries=50
+                )
+        else:
+            dns_entries = args.dns_entries[:50]  # Limit to 50
+            if len(args.dns_entries) > 50:
+                print(f"⚠️  Limited to first 50 DNS entries")
+        
+        if not saved_username or not saved_password or not dns_entries:
+            print("\n❌ Error: Username, password, and DNS entries are required!")
+            retry = input("\nTry again? (y/n): ").strip().lower()
+            if retry != 'y':
+                return
+            continue
+        
+        # Display DNS entries
+        print(f"\n📋 DNS Entries to test ({len(dns_entries)} total):")
+        for idx, dns in enumerate(dns_entries, 1):
+            print(f"  {idx}. {dns}")
+        
+        confirm = input("\nProceed with these DNS entries? (y/n): ").strip().lower()
+        if confirm != 'y':
+            args.dns_entries = None  # Reset to allow re-entry
+            continue
+        
+        # Use first DNS for category/channel selection
+        print(f"\n🎯 Using {dns_entries[0]} to fetch categories and channels...")
+        selected_channels = await interactive_category_selection(dns_entries[0], saved_username, saved_password)
+        
+        if not selected_channels:
+            print("\n❌ No channels selected.")
+            retry = input("\nTry again with different settings? (y/n): ").strip().lower()
+            if retry != 'y':
+                return
+            args.dns_entries = None
+            continue
+        
+        print("\n" + "="*80)
+        print(f"Starting CDN Performance Tests...")
+        print(f"User Agent: {args.user_agent}")
+        print(f"DNS Entries: {len(dns_entries)}")
+        print(f"Channels: {len(selected_channels)}")
+        print(f"Testing Mode: CONCURRENT (all channels tested simultaneously)")
+        print(f"Output File: {args.output}")
+        print("="*80)
+        
+        tester = CDNTester(saved_username, saved_password, args.user_agent)
+        results = await tester.run_tests(dns_entries, selected_channels)
+        
+        if not results:
+            print("\n❌ No results collected.")
+        else:
+            # Generate and print report
+            report = tester.generate_report(results)
+            print(report)
+            
+            # Check for Cloudflare blocks
+            blocked_dns = set()
+            for result in results:
+                if result.cloudflare_blocked:
+                    blocked_dns.add(result.dns_entry)
+            
+            if blocked_dns:
+                print("\n" + "="*80)
+                print("⚠️  CLOUDFLARE BLOCKING DETECTED")
+                print("="*80)
+                print("\nThe following DNS entries are blocked by Cloudflare:")
+                for dns in blocked_dns:
+                    print(f"  🚫 {dns}")
+                print("\nThese servers redirect to: cloudflare-terms-of-service-abuse.com")
+                print("This indicates a Terms of Service violation block.")
+                print("="*80)
+            
+            # Save to CSV
+            tester.save_to_csv(results, args.output)
+            
+            print("\n✅ Testing complete!")
+        
+        # Ask if user wants to run another test
+        print("\n" + "="*80)
+        print("WHAT WOULD YOU LIKE TO DO?")
+        print("="*80)
+        print("1. Run another test (keep credentials, change DNS/channels)")
+        print("2. Exit")
+        
+        choice = input("\nEnter choice (1 or 2): ").strip()
+        
+        if choice != '1':
+            print("\nThank you for using CDN Performance Tester!")
+            input("\nPress Enter to exit...")
+            break
+        
+        # Reset DNS entries for next iteration
+        args.dns_entries = None
 
 if __name__ == "__main__":
     try:
@@ -675,4 +889,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ UNEXPECTED ERROR: {str(e)}")
         print("\n🔧 Please report this error if it persists")
+        import traceback
+        traceback.print_exc()
         input("\nPress Enter to exit...")
