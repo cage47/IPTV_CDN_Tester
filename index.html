@@ -23,7 +23,7 @@
       --display:  'Syne', sans-serif;
     }
 
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; -webkit-text-fill-color: var(--text); }
 
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; }
@@ -95,16 +95,25 @@
       border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
       transition: all 0.12s; font-size: 11px; min-width: 0;
       color: #c9d1d9 !important;
+      -webkit-text-fill-color: #c9d1d9 !important;
     }
     .channel-item * {
       color: #c9d1d9 !important;
+      -webkit-text-fill-color: #c9d1d9 !important;
     }
     .channel-item span {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      flex: 1; min-width: 0; color: #c9d1d9 !important;
+      flex: 1; min-width: 0;
+      color: #c9d1d9 !important;
+      -webkit-text-fill-color: #c9d1d9 !important;
     }
     .channel-item.selected, .channel-item.selected * {
       color: #00d4ff !important;
+      -webkit-text-fill-color: #00d4ff !important;
+    }
+    .channel-item:hover, .channel-item:hover * {
+      color: #00d4ff !important;
+      -webkit-text-fill-color: #00d4ff !important;
     }
     .channel-item:hover { border-color: var(--green); background: var(--green-dim); color: #00d4ff !important; }
     .channel-item:hover * { color: #00d4ff !important; }
