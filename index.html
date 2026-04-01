@@ -93,14 +93,21 @@
     .channel-item {
       display: flex; align-items: center; gap: 8px; padding: 8px 10px;
       border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
-      transition: all 0.12s; font-size: 11px; color: #e2e8f0;
-      min-width: 0;
+      transition: all 0.12s; font-size: 11px; min-width: 0;
+      color: #c9d1d9 !important;
+    }
+    .channel-item * {
+      color: #c9d1d9 !important;
     }
     .channel-item span {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      flex: 1; min-width: 0; color: #e2e8f0;
+      flex: 1; min-width: 0; color: #c9d1d9 !important;
     }
-    .channel-item:hover { border-color: var(--green); background: var(--green-dim); }
+    .channel-item.selected, .channel-item.selected * {
+      color: #00d4ff !important;
+    }
+    .channel-item:hover { border-color: var(--green); background: var(--green-dim); color: #00d4ff !important; }
+    .channel-item:hover * { color: #00d4ff !important; }
     .channel-item.selected { border-color: var(--green); background: var(--green-dim); color: var(--green); }
     .channel-item input[type="checkbox"] { accent-color: var(--green); flex-shrink: 0; }
 
