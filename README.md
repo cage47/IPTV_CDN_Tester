@@ -1,109 +1,142 @@
-## 🎉 Latest Release - v2.1.0
-
-**What's New:**
-- 🔥 **10x Faster Testing** - Concurrent channel testing
-- 🚫 **Cloudflare Detection** - Identifies ToS violation blocks
-- 📝 **Multiline DNS Entry** - Up to 50 DNS entries
-- 🔄 **Loop Mode** - Keep credentials between tests
-
-
 # 🚀 CDN Performance Tester
 
 **Test and compare multiple CDN endpoints for optimal IPTV streaming performance**
 
+## 🌐 Web App — Try It Now
+
+**No installation required.** Use the hosted web version directly in your browser:
+
+### 👉 [iptv-cdn-tester.vercel.app](https://iptv-cdn-tester.vercel.app/)
+
+The web app provides the same core functionality as the Python CLI — connect with your Xtream credentials, select channels, and test CDN endpoints — all from your browser with a visual interface and ranked results.
+
+> **Concerned about credentials?** See the [Security & Privacy](#-security--privacy) section below. The app is fully open source, has no database, and you can verify every network request in your browser's DevTools — or self-host it yourself.
+
+---
+
 ## 📋 Overview
 
-CDN Performance Tester is a comprehensive tool designed to help you find the best CDN endpoint for your IPTV streaming service. It integrates directly with Xtream Codes API to discover channels and measure real-world performance across multiple CDN servers.
+CDN Performance Tester helps you find the best CDN endpoint for your IPTV streaming service. It integrates directly with the Xtream Codes API to discover channels and measure real-world performance across multiple CDN servers.
+
+### Two Ways to Use It
+
+| | Web App | Python CLI |
+|---|---|---|
+| **Install** | None — runs in your browser | Python 3.7+ required |
+| **Link** | [iptv-cdn-tester.vercel.app](https://iptv-cdn-tester.vercel.app/) | `python cdn_iptv_tester.py` |
+| **Best for** | Quick tests, sharing results, mobile | Power users, automation, scripting |
+| **Tests from** | Vercel server (proxy) | Your local machine |
+| **Export** | CSV download | CSV file |
 
 ### ✨ Key Features
 
-- 🔍 **Automatic Channel Discovery** - Fetches categories and channels directly from Xtream API
-- 📊 **Comprehensive Metrics** - Measures latency, jitter, throughput, and connection reliability
-- 🌐 **Network Intelligence** - Identifies hosting providers (Cloudflare, AWS, Azure, etc.)
-- 🗺️ **Geolocation** - Shows server locations and ASN information
-- 📈 **Performance Ranking** - Automatically ranks CDN endpoints by performance
-- 💾 **CSV Export** - Saves detailed results for further analysis
-- 🎯 **User-Friendly** - No technical knowledge required, automatic dependency installation
+- 🔍 **Automatic Channel Discovery** — Fetches categories and channels directly from Xtream API
+- 📊 **Comprehensive Metrics** — Measures latency, jitter, throughput, and connection reliability
+- 🌐 **Network Intelligence** — Identifies hosting providers (Cloudflare, AWS, Azure, etc.)
+- 🗺️ **Geolocation** — Shows server locations and ASN information
+- 📈 **Performance Ranking** — Automatically ranks CDN endpoints by performance
+- 💾 **CSV Export** — Saves detailed results for further analysis
 
-## 🎬 Demo
+---
+
+## 🔒 Security & Privacy
+
+This tool requires your Xtream Codes credentials to function. Here's exactly how they're handled:
+
+### No Database, No Storage
+
+The web app has **no database** — no MongoDB, PostgreSQL, SQLite, or any other data store. Your credentials exist only in your browser's memory for the duration of your session. When you close the tab, they're gone.
+
+### Why the Proxy Exists
+
+IPTV servers reject direct browser requests due to a browser security policy called CORS (Cross-Origin Resource Sharing). The proxy (`api/proxy.js`) is a standard workaround — it forwards your request to the IPTV server and pipes the response back. It does not extract, log, or store any part of your credentials or the response data.
+
+A second proxy (`api/test-proxy.js`) handles the CDN performance tests. This exists because Vercel serves the app over HTTPS, but most IPTV CDN endpoints use HTTP — browsers block these "mixed content" requests, so the proxy bridges the gap.
+
+### What the Proxy Logs
+
+Nothing sensitive. The only logging is standard HTTP access logs (method, path, status code, response time) — the same metadata any web server produces. **No request bodies, no credentials, no usernames, no passwords.**
+
+### Verify It Yourself
+
+- **Inspect the code** — Every file in this repo is exactly what runs on Vercel. Read `api/proxy.js` and `api/test-proxy.js` yourself — they're short and straightforward.
+- **Watch the network** — Open your browser's DevTools (`F12` → Network tab) while using the app. You'll see requests go only to your IPTV server (via `/api/proxy`) and CDN endpoints (via `/api/test-proxy`).
+- **Self-host it** — If you don't trust the hosted version, clone this repo and deploy it yourself (see [Self-Hosting](#self-hosting) below).
+
+### Project Structure (Web App)
 
 ```
-================================================================================
-CDN PERFORMANCE TESTER - STARTUP CHECK
-================================================================================
-✅ Python version: 3.11.5
-✅ aiohttp - installed
-
-================================================================================
-CDN PERFORMANCE TESTER with Xtream Codes Integration
-================================================================================
-
-Enter username: myuser
-Enter password: ********
-
-Enter DNS entries (separate each with a space):
-> http://cdn1.example.com http://cdn2.example.com
-
-📋 Fetching categories from Xtream API...
-✅ Found 25 categories
-
-AVAILABLE CATEGORIES
-1. US NEWS HD
-2. US SPORTS HD
-3. UK CHANNELS
-...
+├── index.html          ← Entire frontend (single file, no build step)
+├── api/
+│   ├── proxy.js        ← CORS proxy for Xtream API calls
+│   └── test-proxy.js   ← Proxy for CDN latency/throughput tests
+├── vercel.json         ← Vercel routing config
+└── package.json        ← Module type declaration
 ```
 
-## 📥 Installation
+---
+
+## 🌐 Web App Usage
+
+1. Go to [iptv-cdn-tester.vercel.app](https://iptv-cdn-tester.vercel.app/)
+2. Enter your Xtream Codes server URL, username, and password
+3. Enter 2–10 CDN endpoints to compare (one per line, include `http://` or `https://`)
+4. Click **Connect & Fetch Channels**
+5. Select up to 10 channels as test probes
+6. Click **Run Tests** and wait for results
+7. Results are ranked by a weighted score (latency 50%, success rate 30%, throughput 20%)
+8. Export to CSV if needed
+
+### A Note on Latency Numbers
+
+Because the web app routes tests through Vercel's proxy server, latency values include the proxy round-trip overhead. This means absolute numbers will be higher than testing locally. However, since **all CDNs are tested through the same proxy**, the relative ranking between them remains accurate — which is what matters for choosing the best endpoint.
+
+For precise absolute measurements, use the Python CLI tool which tests directly from your machine.
+
+---
+
+## 🎉 Latest Release (CLI) - v2.1.0
+
+**What's New:**
+
+- 🔥 **10x Faster Testing** — Concurrent channel testing
+- 🚫 **Cloudflare Detection** — Identifies ToS violation blocks
+- 📝 **Multiline DNS Entry** — Up to 50 DNS entries
+- 🔄 **Loop Mode** — Keep credentials between tests
+
+---
+
+## 💻 Python CLI
 
 ### Requirements
 
-- **Python 3.7 or higher** - [Download Python](https://www.python.org/downloads/)
+- **Python 3.7 or higher** — [Download Python](https://www.python.org/downloads/)
 - Internet connection
 
 ### Quick Start
 
-1. **Download the script:**
-   ```bash
-   git clone https://github.com/cage47/IPTV_CDN_Tester.git
-   cd cdn-performance-tester
-   ```
+```bash
+git clone https://github.com/cage47/IPTV_CDN_Tester.git
+cd IPTV_CDN_Tester
+python cdn_iptv_tester.py
+```
 
-2. **Run the script:**
-   ```bash
-   python cdn_tester.py
-   ```
-
-That's it! The script will automatically install any missing dependencies.
-
-### Alternative: Direct Download
-
-1. Download `cdn_tester.py` from the [latest release](https://github.com/cage47/cdn-performance-tester/releases)
-2. Double-click the file or run `python cdn_tester.py`
-
-## 🎯 How to Use
+The script will automatically install any missing dependencies.
 
 ### Interactive Mode (Recommended)
 
 Simply run the script and follow the prompts:
 
 ```bash
-python cdn_tester.py
+python cdn_iptv_tester.py
 ```
 
-The script will ask you for:
-1. **Username** - Your Xtream Codes username
-2. **Password** - Your Xtream Codes password
-3. **DNS Entries** - The CDN servers you want to test (space-separated)
-4. **Categories** - Which channel categories to test
-5. **Channels** - Specific channels to use for testing (up to 10)
+The script will ask for your username, password, DNS entries, categories, and channels.
 
 ### Command Line Mode
 
-For advanced users or automation:
-
 ```bash
-python cdn_tester.py \
+python cdn_iptv_tester.py \
   --username myuser \
   --password mypass \
   --dns-entries http://cdn1.example.com http://cdn2.example.com http://cdn3.example.com \
@@ -111,44 +144,41 @@ python cdn_tester.py \
   --output results.csv
 ```
 
-### Example
+### Command Line Arguments
 
-```bash
-python cdn_tester.py \
-  --username x12334 \
-  --password p12345 \
-  --dns-entries http://cdn1.me http://cdn2.me http://cdn3.me \
-  --user-agent tivimate
-```
+| Argument | Short | Description | Default |
+|---|---|---|---|
+| `--username` | `-u` | Xtream username | Interactive prompt |
+| `--password` | `-p` | Xtream password | Interactive prompt |
+| `--dns-entries` | `-d` | CDN servers to test | Interactive prompt |
+| `--user-agent` | `-a` | User agent (`tivimate` or `vlc`) | `tivimate` |
+| `--output` | `-o` | CSV output filename | `cdn_results.csv` |
+
+---
 
 ## 📊 Understanding the Results
 
-### Console Output
+### Performance Metrics
 
-The script provides real-time feedback:
+| Metric | What it measures | Good values |
+|---|---|---|
+| **Latency** | Round-trip time to the CDN | Lower is better (< 80ms) |
+| **Jitter** | Variation in latency | Lower is better (< 10ms) |
+| **Throughput** | Download speed from CDN | Higher is better (> 10 Mbps) |
+| **Success Rate** | How many channels responded | Higher is better |
+| **Score** | Weighted composite | Higher is better |
 
-```
-Testing http://cdn1.example.com (104.21.45.123)
-Hosting: Cloudflare
-ASN: AS13335 - Cloudflare, Inc., Location: San Francisco, United States
-
-  📺 Testing: CNN HD (ID: 429623)
-     ✓ Latency: 45.32ms | Jitter: 2.15ms | Throughput: 125.45Mbps
-```
-
-### CSV Export
-
-Results are saved to `cdn_results.csv` with the following columns:
+### CSV Export Columns
 
 | Column | Description |
-|--------|-------------|
+|---|---|
 | `dns_entry` | CDN server URL |
 | `channel_id` | Channel stream ID |
 | `channel_name` | Channel name |
 | `timestamp` | Test time |
-| `avg_latency_ms` | Average ping time (lower is better) |
-| `jitter_ms` | Latency variation (lower is better) |
-| `throughput_mbps` | Download speed in Mbps (higher is better) |
+| `avg_latency_ms` | Average ping time |
+| `jitter_ms` | Latency variation |
+| `throughput_mbps` | Download speed in Mbps |
 | `ip_address` | Server IP address |
 | `asn` | Autonomous System Number |
 | `geolocation` | Server location |
@@ -156,143 +186,96 @@ Results are saved to `cdn_results.csv` with the following columns:
 | `success_rate` | Percentage of successful tests |
 | `error_message` | Error details (if any) |
 
-### Performance Report
-
-At the end, you'll get a ranked summary:
-
-```
-================================================================================
-CDN PERFORMANCE TEST REPORT
-================================================================================
-
-#1 - http://cdn1.me
---------------------------------------------------------------------------------
-IP Address: 104.21.45.123
-Hosting Provider: Cloudflare
-ASN: AS13335 - Cloudflare, Inc.
-Location: San Francisco, United States
-
-Average Performance:
-  Latency: 42.15ms
-  Jitter: 1.85ms
-  Throughput: 145.32Mbps
-  Success Rate: 10/10 channels
-
-#2 - http://cdn2.me
-...
-```
-
-## 🔧 Configuration Options
-
-### Command Line Arguments
-
-| Argument | Short | Description | Default |
-|----------|-------|-------------|---------|
-| `--username` | `-u` | Xtream username | Interactive prompt |
-| `--password` | `-p` | Xtream password | Interactive prompt |
-| `--dns-entries` | `-d` | CDN servers to test | Interactive prompt |
-| `--user-agent` | `-a` | User agent (`tivimate` or `vlc`) | `tivimate` |
-| `--output` | `-o` | CSV output filename | `cdn_results.csv` |
-
-### Supported User Agents
-
-- **tivimate** - TiviMate/4.4.0 (Android 11)
-- **vlc** - VLC/3.0.18 LibVLC/3.0.18
+---
 
 ## 🏗️ How It Works
 
-1. **Credential Verification** - Validates Xtream Codes credentials
-2. **Category Discovery** - Fetches available channel categories via Xtream API
-3. **Channel Selection** - Lets you choose specific channels to test
-4. **DNS Resolution** - Resolves each CDN domain to IP addresses
-5. **ASN Lookup** - Identifies hosting provider and geolocation
-6. **Latency Testing** - Measures average ping time and jitter (5 pings per channel)
-7. **Throughput Testing** - Downloads stream data for 5 seconds to measure speed
-8. **Performance Ranking** - Calculates overall score and ranks CDNs
-9. **Report Generation** - Creates detailed CSV and console summary
+1. **Credential Verification** — Validates Xtream Codes credentials
+2. **Category Discovery** — Fetches available channel categories via Xtream API
+3. **Channel Selection** — Lets you choose specific channels to test
+4. **DNS Resolution** — Resolves each CDN domain to IP addresses
+5. **ASN Lookup** — Identifies hosting provider and geolocation
+6. **Latency Testing** — Measures average ping time and jitter (5 pings per channel)
+7. **Throughput Testing** — Downloads stream data to measure speed
+8. **Performance Ranking** — Calculates overall score and ranks CDNs
+9. **Report Generation** — Creates detailed CSV and visual summary
+
+---
+
+## 🖥️ Self-Hosting
+
+If you'd prefer to run the web app yourself rather than use the hosted version:
+
+### Option A — Vercel (Recommended)
+
+1. Fork this repository
+2. Create a free account at [vercel.com](https://vercel.com)
+3. Import your forked repo — Vercel auto-detects the config
+4. Done — you'll get your own URL
+
+### Option B — Local Development
+
+```bash
+git clone https://github.com/cage47/IPTV_CDN_Tester.git
+cd IPTV_CDN_Tester
+npm install -g vercel
+vercel dev
+```
+
+This runs the app locally at `http://localhost:3000` with the serverless functions working.
+
+---
 
 ## 🌐 Supported Hosting Providers
 
-The script automatically identifies these providers:
+The tool automatically identifies these providers:
 
-### Cloud Providers
-- Cloudflare
-- Amazon Web Services (AWS)
-- Google Cloud Platform (GCP)
-- Microsoft Azure
-- Oracle Cloud
-- IBM Cloud
-- Alibaba Cloud
+**Cloud:** Cloudflare, AWS, Google Cloud, Microsoft Azure, Oracle Cloud, IBM Cloud, Alibaba Cloud
 
-### Hosting/VPS Providers
-- DigitalOcean
-- Linode/Akamai
-- OVH
-- Hetzner
-- Vultr
-- Rackspace
-- Contabo
+**Hosting/VPS:** DigitalOcean, Linode/Akamai, OVH, Hetzner, Vultr, Rackspace, Contabo
 
-### CDN Providers
-- Fastly CDN
-- CDN77
-- StackPath
-- BunnyCDN
+**CDN:** Fastly, CDN77, StackPath, BunnyCDN
+
+---
 
 ## ❓ Troubleshooting
 
-### "Python not found"
-**Problem:** Windows can't find Python
-**Solution:** Install Python from [python.org](https://www.python.org/downloads/) and check "Add Python to PATH" during installation
+### Web App
 
-### "Failed to install packages"
-**Problem:** Automatic package installation failed
-**Solution:** Run manually: `pip install aiohttp`
+| Problem | Solution |
+|---|---|
+| All tests show "unreachable" | Make sure CDN URLs include `http://` or `https://` |
+| "No categories returned" | Verify your credentials and server URL are correct |
+| Tests are slow | Each CDN × channel combination runs 5 latency pings + a throughput test — this is normal |
 
-### "Invalid credentials"
-**Problem:** Can't connect to Xtream API
-**Solution:** 
-- Verify your username and password are correct
-- Ensure the DNS entry is correct (must include `http://` or `https://`)
-- Check if your IPTV subscription is active
+### Python CLI
 
-### "No categories found"
-**Problem:** Xtream API returns no data
-**Solution:**
-- Verify the CDN URL is correct
-- Try a different DNS entry from your provider
-- Some providers may not support the Xtream API
+| Problem | Solution |
+|---|---|
+| "Python not found" | Install from [python.org](https://www.python.org/downloads/) — check "Add Python to PATH" on Windows |
+| "Failed to install packages" | Run manually: `pip install aiohttp` |
+| "Invalid credentials" | Verify username/password and that the DNS entry includes `http://` |
+| All tests show 0 throughput | Check your internet connection or try different channels |
 
-### All tests show 0 throughput
-**Problem:** Can't download stream data
-**Solution:**
-- Check your internet connection
-- The stream may require authentication that's failing
-- Try different channels
+---
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-### Development Setup
+When reporting issues, please include:
 
-```bash
-git clone https://github.com/cage47/IPTV_CDN_Tester.git
-cd cdn-performance-tester
-pip install aiohttp
-```
-
-### Reporting Issues
-
-Please include:
-- Python version (`python --version`)
+- Which version (web app or CLI)
+- Browser or Python version
 - Operating system
 - Complete error message
 - Steps to reproduce
 
+---
+
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ## ⚠️ Disclaimer
 
@@ -302,7 +285,9 @@ This tool is intended for testing your own legal IPTV subscriptions. It does not
 
 - Inspired by [xtream2m3u](https://github.com/ovosimpatico/xtream2m3u) for Xtream API integration
 - Uses [ipapi.co](https://ipapi.co) for IP geolocation services
-- Built with [aiohttp](https://docs.aiohttp.org/) for async HTTP requests
+- Built with [aiohttp](https://docs.aiohttp.org/) for async HTTP requests (CLI)
+- Hosted on [Vercel](https://vercel.com) (web app)
 
+---
 
 **Made with ❤️ for the IPTV community**
