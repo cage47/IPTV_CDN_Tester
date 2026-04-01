@@ -89,11 +89,15 @@
     .step.done { background: #00e5ff15; border-color: #00e5ff40; color: #00e5ff80; }
 
     /* ── Channel grid ── */
-    .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; max-height: 280px; overflow-y: auto; padding-right: 4px; }
+    .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
     .channel-item {
       display: flex; align-items: center; gap: 8px; padding: 8px 10px;
       border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
       transition: all 0.12s; font-size: 11px; color: var(--text);
+      overflow: hidden; white-space: nowrap;
+    }
+    .channel-item span {
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
     }
     .channel-item:hover { border-color: var(--green); background: var(--green-dim); }
     .channel-item.selected { border-color: var(--green); background: var(--green-dim); color: var(--green); }
