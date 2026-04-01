@@ -41,244 +41,192 @@
     @keyframes blink { 50% { opacity: 0; } }
 
     .nav-back {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 11px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin-top: 8px;
-      transition: color 0.2s;
+      display: inline-flex; align-items: center; gap: 6px; color: var(--muted);
+      text-decoration: none; font-size: 11px; letter-spacing: 0.05em;
+      text-transform: uppercase; margin-top: 8px; transition: color 0.2s;
     }
     .nav-back:hover { color: var(--green); }
 
-    /* ── Type Tabs ── */
-    .type-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 0; margin-bottom: 28px; }
+    .tab { 
+      flex: 1; padding: 12px 20px; border: 1px solid var(--border); 
+      font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; 
+      color: var(--muted); text-align: center; transition: all 0.2s; 
+      cursor: pointer; background: transparent;
     }
-
-    .type-tab {
-      flex: 1;
-      padding: 10px 16px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: transparent;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .type-tab:hover {
-      border-color: var(--green);
-      color: var(--text);
-    }
-
-    .type-tab.active {
-      background: var(--green-dim);
-      border-color: var(--green);
-      color: var(--green);
-    }
+    .tab:first-child { border-radius: 4px 0 0 4px; }
+    .tab:last-child { border-radius: 0 4px 4px 0; }
+    .tab + .tab { border-left: none; }
+    .tab.active { background: var(--green-dim); border-color: var(--green); color: var(--green); }
 
     /* ── Cards ── */
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px; margin-bottom: 20px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+    .card-title { font-family: var(--display); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--green); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .card-title::before { content: ''; display: inline-block; width: 3px; height: 14px; background: var(--green); border-radius: 2px; }
 
     /* ── Form ── */
-    .field { margin-bottom: 16px; }
-    label { 
-      display: block; 
-      font-size: 10px; 
-      letter-spacing: 0.1em; 
-      text-transform: uppercase; 
-      color: var(--muted); 
-      margin-bottom: 6px; 
-      font-weight: 500;
-    }
-    
+    .field { margin-bottom: 14px; }
+    label { display: block; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    label .required { color: var(--red); margin-left: 2px; }
     input {
-      width: 100%; 
-      background: var(--bg); 
-      border: 1px solid var(--border);
-      border-radius: 4px; 
-      padding: 11px 14px; 
-      color: var(--text);
-      font-family: var(--mono); 
-      font-size: 13px; 
-      outline: none;
-      transition: all 0.15s;
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; padding: 10px 12px; color: var(--text);
+      font-family: var(--mono); font-size: 13px; outline: none;
+      transition: border-color 0.15s;
     }
-    input:focus { 
-      border-color: var(--green); 
-      box-shadow: 0 0 0 3px var(--green-dim); 
-    }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-dim); }
     input[type="password"] { letter-spacing: 0.1em; }
-    input::placeholder {
-      color: var(--muted);
-      opacity: 0.6;
-    }
 
-    .field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-    }
-    @media (max-width: 600px) { 
-      .field-row { grid-template-columns: 1fr; } 
+    .field-hint {
+      font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.4;
     }
 
     /* ── Buttons ── */
     .btn {
-      display: inline-flex; 
-      align-items: center; 
-      justify-content: center;
-      gap: 8px;
-      padding: 12px 28px; 
-      border-radius: 6px; 
-      border: none; 
-      cursor: pointer;
-      font-family: var(--mono); 
-      font-size: 12px; 
-      font-weight: 600;
-      letter-spacing: 0.05em; 
-      text-transform: uppercase; 
-      transition: all 0.2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 24px; border-radius: 4px; border: none; cursor: pointer;
+      font-family: var(--mono); font-size: 12px; font-weight: 500;
+      letter-spacing: 0.05em; text-transform: uppercase; transition: all 0.15s;
       width: 100%;
     }
-    .btn-primary { 
-      background: linear-gradient(90deg,#00d4ff,#c040fb); 
-      color: #000; 
-    }
-    .btn-primary:hover:not(:disabled) { 
-      background: linear-gradient(90deg,#40ffff,#d060ff); 
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 212, 255, 0.3);
-    }
-    .btn-primary:disabled { 
-      background: var(--muted); 
-      color: var(--bg); 
-      cursor: not-allowed; 
-      opacity: 0.5; 
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-    }
+    .btn-primary { background: linear-gradient(90deg,#00d4ff,#c040fb); color: #000; }
+    .btn-primary:hover:not(:disabled) { background: #40ffff; }
+    .btn-primary:disabled { background: var(--muted); color: var(--bg); cursor: not-allowed; opacity: 0.6; }
 
     /* ── Results ── */
     .results-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
+      gap: 10px;
     }
 
-    .result-item {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 14px 16px;
+    .result-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
     }
 
     .result-label {
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .result-value {
+      color: var(--text);
+      font-weight: 400;
+      word-break: break-all;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .status-valid { background: #00e5ff20; color: var(--green); }
+    .status-invalid { background: #ff174420; color: var(--red); }
+    .status-expired { background: #ffab0020; color: var(--amber); }
+
+    /* ── Categories ── */
+    .categories-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .categories-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 12px;
+    }
+
+    .category-type {
+      margin-bottom: 16px;
+    }
+
+    .category-type-header {
       font-size: 10px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .result-value {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      word-break: break-all;
-    }
-
-    .result-value.success { color: var(--green); }
-    .result-value.warning { color: var(--amber); }
-    .result-value.error { color: var(--red); }
-
-    /* ── Status Card ── */
-    .status-card {
-      background: var(--surface);
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .status-card.success {
-      border-color: var(--green);
-      background: linear-gradient(135deg, var(--surface), #001a1a);
-    }
-
-    .status-card.error {
-      border-color: var(--red);
-      background: linear-gradient(135deg, var(--surface), #1a0000);
-    }
-
-    .status-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-    }
-
-    .status-title {
-      font-family: var(--display);
-      font-size: 18px;
+    .category-count {
+      background: var(--green-dim);
+      color: var(--green);
+      padding: 2px 6px;
+      border-radius: 3px;
       font-weight: 700;
-      margin-bottom: 6px;
+      font-size: 9px;
     }
 
-    .status-card.success .status-title { color: var(--green); }
-    .status-card.error .status-title { color: var(--red); }
-
-    .status-message {
-      color: var(--muted);
-      font-size: 12px;
+    .category-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
-    /* ── Info box ── */
-    .info-box {
-      background: #1a2744;
-      border-left: 3px solid var(--blue);
-      padding: 14px 16px;
+    .category-tag {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
       border-radius: 4px;
       font-size: 11px;
-      line-height: 1.6;
       color: var(--text);
-      margin-bottom: 24px;
+      transition: all 0.15s;
     }
 
-    .info-box strong {
-      color: var(--green);
+    .category-tag:hover {
+      border-color: var(--green);
+      background: var(--green-dim);
     }
 
     .hidden { display: none; }
 
-    /* ── Loading ── */
-    .spinner {
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .warning-box {
+      background: #1a2744;
+      border-left: 3px solid var(--blue);
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 11px;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .loading {
       display: inline-block;
-      width: 16px;
-      height: 16px;
-      border: 2px solid var(--border);
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--green-dim);
       border-top-color: var(--green);
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -292,132 +240,100 @@
     </header>
 
     <main>
-      <!-- Type Selection -->
-      <div class="type-tabs">
-        <button class="type-tab active" data-type="xtream">Xtream</button>
-        <button class="type-tab" data-type="stalker">Stalker (MAC)</button>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="xtream">Xtream / Single</button>
+        <button class="tab" data-tab="stalker">Stalker (MAC)</button>
       </div>
 
-      <!-- Input Card -->
-      <div class="card">
-        <div class="info-box">
-          <strong>Secure Testing:</strong> All credential validation happens through a secure proxy. 
-          Your credentials are never stored or logged.
+      <!-- Xtream Tab -->
+      <div class="tab-content active" id="xtream-content">
+        <div class="warning-box">
+          🔒 Built for <strong>r/IPTV_ZONENEW</strong>. Validate Xtream or Stalker (MAC). Stored only in your browser.
         </div>
 
-        <!-- Xtream Form -->
-        <form id="xtreamForm">
+        <div class="card">
+          <div class="card-title">Xtream Credentials</div>
+          
           <div class="field">
-            <label>Server URL</label>
-            <input type="text" id="xtreamUrl" placeholder="http://example.com:8080" required />
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label>Username</label>
-              <input type="text" id="xtreamUsername" placeholder="username" autocomplete="username" required />
-            </div>
-
-            <div class="field">
-              <label>Password</label>
-              <input type="password" id="xtreamPassword" placeholder="password" autocomplete="current-password" required />
-            </div>
-          </div>
-
-          <div class="btn-group">
-            <button type="submit" class="btn btn-primary" id="xtreamCheckBtn">
-              <span>Check Credentials</span>
-            </button>
-          </div>
-        </form>
-
-        <!-- Stalker Form -->
-        <form id="stalkerForm" class="hidden">
-          <div class="field">
-            <label>Server URL</label>
-            <input type="text" id="stalkerUrl" placeholder="http://example.com/stalker_portal" required />
+            <label>URL <span class="required">*</span></label>
+            <input type="text" id="xtreamUrl" placeholder="http://example.com:8080" />
+            <div class="field-hint">Server URL with port (e.g., http://domain.com:8080)</div>
           </div>
 
           <div class="field">
-            <label>MAC Address</label>
-            <input type="text" id="stalkerMac" placeholder="00:1A:79:XX:XX:XX" pattern="^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$" required />
+            <label>Username <span class="required">*</span></label>
+            <input type="text" id="xtreamUsername" placeholder="username" autocomplete="username" />
           </div>
 
-          <div class="btn-group">
-            <button type="submit" class="btn btn-primary" id="stalkerCheckBtn">
-              <span>Check Credentials</span>
-            </button>
+          <div class="field">
+            <label>Password <span class="required">*</span></label>
+            <input type="password" id="xtreamPassword" placeholder="password" autocomplete="current-password" />
           </div>
-        </form>
+
+          <button class="btn btn-primary" id="xtreamCheckBtn">
+            <span id="xtreamBtnText">Check</span>
+          </button>
+        </div>
+
+        <!-- Xtream Results -->
+        <div class="card hidden" id="xtreamResults">
+          <div class="card-title">Account Details</div>
+          <div class="results-grid" id="xtreamResultsGrid"></div>
+        </div>
       </div>
 
-      <!-- Results -->
-      <div id="resultsContainer" class="hidden"></div>
+      <!-- Stalker Tab -->
+      <div class="tab-content" id="stalker-content">
+        <div class="warning-box">
+          🔒 Built for <strong>r/IPTV_ZONENEW</strong>. Validate Xtream or Stalker (MAC). Stored only in your browser.
+        </div>
+
+        <div class="card">
+          <div class="card-title">Stalker (MAC) Credentials</div>
+          
+          <div class="field">
+            <label>Portal URL <span class="required">*</span></label>
+            <input type="text" id="stalkerUrl" placeholder="http://example.com/stalker_portal/c" />
+            <div class="field-hint">Stalker portal URL</div>
+          </div>
+
+          <div class="field">
+            <label>MAC Address <span class="required">*</span></label>
+            <input type="text" id="stalkerMac" placeholder="00:1A:79:XX:XX:XX" />
+            <div class="field-hint">Format: 00:1A:79:XX:XX:XX</div>
+          </div>
+
+          <button class="btn btn-primary" id="stalkerCheckBtn">
+            <span id="stalkerBtnText">Check</span>
+          </button>
+        </div>
+
+        <!-- Stalker Results -->
+        <div class="card hidden" id="stalkerResults">
+          <div class="card-title">Account Details</div>
+          <div class="results-grid" id="stalkerResultsGrid"></div>
+        </div>
+      </div>
     </main>
   </div>
 
 <script>
 // ─────────────────────────────────────────────
-// Elements & State
+// Tab Switching
 // ─────────────────────────────────────────────
-const typeTabs = document.querySelectorAll('.type-tab');
-const xtreamForm = document.getElementById('xtreamForm');
-const stalkerForm = document.getElementById('stalkerForm');
-const resultsContainer = document.getElementById('resultsContainer');
-
-let currentType = 'xtream';
-
-// ─────────────────────────────────────────────
-// Type Tab Switching
-// ─────────────────────────────────────────────
-typeTabs.forEach(tab => {
+document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    const type = tab.dataset.type;
+    const targetTab = tab.dataset.tab;
     
-    // Update active state
-    typeTabs.forEach(t => t.classList.remove('active'));
+    // Update tab buttons
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
     
-    // Show correct form
-    if (type === 'xtream') {
-      xtreamForm.classList.remove('hidden');
-      stalkerForm.classList.add('hidden');
-    } else {
-      xtreamForm.classList.add('hidden');
-      stalkerForm.classList.remove('hidden');
-    }
-    
-    // Clear results
-    resultsContainer.classList.add('hidden');
-    resultsContainer.innerHTML = '';
-    
-    currentType = type;
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`${targetTab}-content`).classList.add('active');
   });
-});
-
-// ─────────────────────────────────────────────
-// Xtream Form Handler
-// ─────────────────────────────────────────────
-xtreamForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const url = document.getElementById('xtreamUrl').value.trim();
-  const username = document.getElementById('xtreamUsername').value.trim();
-  const password = document.getElementById('xtreamPassword').value.trim();
-  
-  await checkXtream(url, username, password);
-});
-
-// ─────────────────────────────────────────────
-// Stalker Form Handler
-// ─────────────────────────────────────────────
-stalkerForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  
-  const url = document.getElementById('stalkerUrl').value.trim();
-  const mac = document.getElementById('stalkerMac').value.trim();
-  
-  await checkStalker(url, mac);
 });
 
 // ─────────────────────────────────────────────
@@ -436,280 +352,344 @@ function validateUrl(urlString) {
   }
 
   const hostname = url.hostname.toLowerCase();
-  const blockedPatterns = [
+  const privatePatterns = [
     'localhost', '127.', '0.0.0.0', '10.', '192.168.', '169.254.',
-    '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.',
-    '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.',
-    '172.28.', '172.29.', '172.30.', '172.31.', '[::1]'
+    '172.16.', '172.17.', '172.18.', '172.19.', '172.20.',
+    '172.21.', '172.22.', '172.23.', '172.24.', '172.25.',
+    '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.',
+    '[::1]', '.local', '.internal', '.lan'
   ];
 
-  if (blockedPatterns.some(p => hostname.includes(p))) {
-    return { valid: false, error: 'Private/internal IPs blocked' };
-  }
-
-  if (hostname.endsWith('.local') || hostname.endsWith('.internal') || hostname.endsWith('.lan')) {
-    return { valid: false, error: 'Internal domains blocked' };
+  for (const pattern of privatePatterns) {
+    if (hostname === pattern || hostname.startsWith(pattern) || hostname.includes(pattern)) {
+      return { valid: false, error: 'Private/internal addresses blocked' };
+    }
   }
 
   return { valid: true, url };
 }
 
 // ─────────────────────────────────────────────
-// Check Xtream Credentials
+// Xtream Checker
 // ─────────────────────────────────────────────
-async function checkXtream(serverUrl, username, password) {
-  // Validate URL
-  const urlCheck = validateUrl(serverUrl);
-  if (!urlCheck.valid) {
-    showError(urlCheck.error);
+document.getElementById('xtreamCheckBtn').addEventListener('click', async () => {
+  const urlInput = document.getElementById('xtreamUrl').value.trim();
+  const username = document.getElementById('xtreamUsername').value.trim();
+  const password = document.getElementById('xtreamPassword').value.trim();
+  const btn = document.getElementById('xtreamCheckBtn');
+  const btnText = document.getElementById('xtreamBtnText');
+  const resultsCard = document.getElementById('xtreamResults');
+  const resultsGrid = document.getElementById('xtreamResultsGrid');
+
+  // Validation
+  if (!urlInput || !username || !password) {
+    alert('All fields are required');
     return;
   }
 
-  // Show loading
-  showLoading();
+  const urlCheck = validateUrl(urlInput);
+  if (!urlCheck.valid) {
+    alert(`Invalid URL: ${urlCheck.error}`);
+    return;
+  }
+
+  // Build API URL
+  const baseUrl = urlInput.replace(/\/$/, '');
+  const apiUrl = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="loading"></span>';
+  resultsCard.classList.add('hidden');
 
   try {
-    // Build API URL
-    const apiUrl = new URL(serverUrl);
-    apiUrl.pathname = '/player_api.php';
-    apiUrl.searchParams.append('username', username);
-    apiUrl.searchParams.append('password', password);
-
-    // Make request via proxy
-    const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(apiUrl.href);
+    const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(apiUrl);
     const response = await fetch(proxyUrl, { cache: 'no-store' });
-
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(`HTTP ${response.status}`);
     }
 
     const data = await response.json();
-
-    // Check if auth failed
-    if (data.user_info && data.user_info.auth === 0) {
-      showError('Invalid credentials');
-      return;
+    
+    // Check if valid
+    if (data.user_info) {
+      displayXtreamResults(data, baseUrl);
+    } else {
+      alert('Invalid credentials or API response');
     }
 
-    // Show success with account info
-    showXtreamSuccess(data, serverUrl);
-
   } catch (error) {
-    showError(error.message);
+    alert(`Error: ${error.message}`);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'Check';
+  }
+});
+
+async function displayXtreamResults(data, baseUrl) {
+  const info = data.user_info || {};
+  const serverInfo = data.server_info || {};
+  
+  // Determine status
+  let status = 'valid';
+  let statusText = 'Active';
+  
+  if (info.status === 'Expired' || info.exp_date === 'expired') {
+    status = 'expired';
+    statusText = 'Expired';
+  } else if (info.status !== 'Active' && info.active_cons !== undefined) {
+    status = 'invalid';
+    statusText = 'Inactive';
+  }
+
+  const expiry = info.exp_date || 'N/A';
+  const maxConn = info.max_connections || '1';
+  const activeConn = info.active_cons || '0';
+  const realUrl = baseUrl;
+  const port = serverInfo.port || new URL(baseUrl).port || '80';
+  const timezone = serverInfo.timezone || 'N/A';
+
+  const resultsGrid = document.getElementById('xtreamResultsGrid');
+  resultsGrid.innerHTML = `
+    <div class="result-row">
+      <div class="result-label">Status</div>
+      <div class="result-value"><span class="status-badge status-${status}">${statusText}</span></div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Expiry Date</div>
+      <div class="result-value">${escHtml(expiry)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Max Connections</div>
+      <div class="result-value">${escHtml(maxConn)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Active Connections</div>
+      <div class="result-value">${escHtml(activeConn)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Real URL</div>
+      <div class="result-value">${escHtml(realUrl)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Port</div>
+      <div class="result-value">${escHtml(port)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Timezone</div>
+      <div class="result-value">${escHtml(timezone)}</div>
+    </div>
+  `;
+
+  document.getElementById('xtreamResults').classList.remove('hidden');
+
+  // Fetch categories
+  const username = document.getElementById('xtreamUsername').value.trim();
+  const password = document.getElementById('xtreamPassword').value.trim();
+  
+  try {
+    const categories = await fetchCategories(baseUrl, username, password);
+    displayCategories(categories);
+  } catch (e) {
+    console.error('Failed to fetch categories:', e);
   }
 }
 
+async function fetchCategories(baseUrl, username, password) {
+  const results = {
+    live: [],
+    vod: [],
+    series: []
+  };
+
+  try {
+    // Fetch Live categories
+    const liveUrl = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_live_categories`;
+    const liveProxy = '/api/test-proxy?url=' + encodeURIComponent(liveUrl);
+    const liveRes = await fetch(liveProxy, { cache: 'no-store' });
+    if (liveRes.ok) {
+      results.live = await liveRes.json();
+    }
+  } catch (e) {
+    console.error('Live categories failed:', e);
+  }
+
+  try {
+    // Fetch VOD categories
+    const vodUrl = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_vod_categories`;
+    const vodProxy = '/api/test-proxy?url=' + encodeURIComponent(vodUrl);
+    const vodRes = await fetch(vodProxy, { cache: 'no-store' });
+    if (vodRes.ok) {
+      results.vod = await vodRes.json();
+    }
+  } catch (e) {
+    console.error('VOD categories failed:', e);
+  }
+
+  try {
+    // Fetch Series categories
+    const seriesUrl = `${baseUrl}/player_api.php?username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&action=get_series_categories`;
+    const seriesProxy = '/api/test-proxy?url=' + encodeURIComponent(seriesUrl);
+    const seriesRes = await fetch(seriesProxy, { cache: 'no-store' });
+    if (seriesRes.ok) {
+      results.series = await seriesRes.json();
+    }
+  } catch (e) {
+    console.error('Series categories failed:', e);
+  }
+
+  return results;
+}
+
+function displayCategories(categories) {
+  const resultsGrid = document.getElementById('xtreamResultsGrid');
+  
+  let categoriesHtml = '<div class="categories-section"><div class="categories-title">Available Categories</div>';
+
+  // Live TV
+  if (categories.live && categories.live.length > 0) {
+    categoriesHtml += `
+      <div class="category-type">
+        <div class="category-type-header">
+          📺 Live TV <span class="category-count">${categories.live.length}</span>
+        </div>
+        <div class="category-list">
+          ${categories.live.map(cat => `<div class="category-tag">${escHtml(cat.category_name)}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // VOD
+  if (categories.vod && categories.vod.length > 0) {
+    categoriesHtml += `
+      <div class="category-type">
+        <div class="category-type-header">
+          🎬 Movies (VOD) <span class="category-count">${categories.vod.length}</span>
+        </div>
+        <div class="category-list">
+          ${categories.vod.map(cat => `<div class="category-tag">${escHtml(cat.category_name)}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // Series
+  if (categories.series && categories.series.length > 0) {
+    categoriesHtml += `
+      <div class="category-type">
+        <div class="category-type-header">
+          📺 Series <span class="category-count">${categories.series.length}</span>
+        </div>
+        <div class="category-list">
+          ${categories.series.map(cat => `<div class="category-tag">${escHtml(cat.category_name)}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  categoriesHtml += '</div>';
+
+  resultsGrid.insertAdjacentHTML('beforeend', categoriesHtml);
+}
+
 // ─────────────────────────────────────────────
-// Check Stalker Credentials
+// Stalker Checker
 // ─────────────────────────────────────────────
-async function checkStalker(serverUrl, mac) {
-  // Validate URL
-  const urlCheck = validateUrl(serverUrl);
+document.getElementById('stalkerCheckBtn').addEventListener('click', async () => {
+  const urlInput = document.getElementById('stalkerUrl').value.trim();
+  const mac = document.getElementById('stalkerMac').value.trim();
+  const btn = document.getElementById('stalkerCheckBtn');
+  const btnText = document.getElementById('stalkerBtnText');
+  const resultsCard = document.getElementById('stalkerResults');
+  const resultsGrid = document.getElementById('stalkerResultsGrid');
+
+  if (!urlInput || !mac) {
+    alert('All fields are required');
+    return;
+  }
+
+  const urlCheck = validateUrl(urlInput);
   if (!urlCheck.valid) {
-    showError(urlCheck.error);
+    alert(`Invalid URL: ${urlCheck.error}`);
     return;
   }
 
   // Validate MAC format
-  const macPattern = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
-  if (!macPattern.test(mac)) {
-    showError('Invalid MAC address format');
+  const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+  if (!macRegex.test(mac)) {
+    alert('Invalid MAC address format');
     return;
   }
 
-  // Show loading
-  showLoading();
+  btn.disabled = true;
+  btnText.innerHTML = '<span class="loading"></span>';
+  resultsCard.classList.add('hidden');
 
   try {
-    // Build Stalker portal URL
-    const apiUrl = new URL(serverUrl);
-    if (!apiUrl.pathname.includes('stalker_portal')) {
-      apiUrl.pathname = '/stalker_portal/server/load.php';
-    }
-    apiUrl.searchParams.append('type', 'account_info');
-    apiUrl.searchParams.append('mac', mac);
-
-    // Make request via proxy
-    const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(apiUrl.href);
+    // Stalker portal handshake
+    const handshakeUrl = `${urlInput}/server/load.php?type=stb&action=handshake&JsHttpRequest=1-xml`;
+    const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(handshakeUrl) + '&mac=' + encodeURIComponent(mac);
+    
     const response = await fetch(proxyUrl, { 
       cache: 'no-store',
-      headers: {
-        'Accept': 'application/json'
-      }
+      headers: { 'X-User-Agent': 'Model: MAG250; Link: Ethernet' }
     });
-
+    
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(`HTTP ${response.status}`);
     }
 
     const data = await response.json();
-
-    // Check response
-    if (data.js && data.js.error) {
-      showError(data.js.error);
-      return;
+    
+    if (data.js) {
+      displayStalkerResults(data.js, urlInput, mac);
+    } else {
+      alert('Invalid MAC or portal response');
     }
 
-    // Show success
-    showStalkerSuccess(data, serverUrl, mac);
-
   } catch (error) {
-    showError(error.message);
+    alert(`Error: ${error.message}`);
+  } finally {
+    btn.disabled = false;
+    btnText.textContent = 'Check';
   }
-}
+});
 
-// ─────────────────────────────────────────────
-// Display Functions
-// ─────────────────────────────────────────────
-function showLoading() {
-  resultsContainer.classList.remove('hidden');
-  resultsContainer.innerHTML = `
-    <div class="status-card">
-      <div class="status-icon"><div class="spinner"></div></div>
-      <div class="status-title">Checking Credentials...</div>
-      <div class="status-message">Please wait while we validate your account</div>
-    </div>
-  `;
-}
-
-function showError(message) {
-  resultsContainer.classList.remove('hidden');
-  resultsContainer.innerHTML = `
-    <div class="status-card error">
-      <div class="status-icon">❌</div>
-      <div class="status-title">Validation Failed</div>
-      <div class="status-message">${escHtml(message)}</div>
-    </div>
-  `;
-}
-
-function showXtreamSuccess(data, serverUrl) {
-  const user = data.user_info || {};
-  const server = data.server_info || {};
+function displayStalkerResults(data, portalUrl, mac) {
+  const token = data.token || 'N/A';
+  const status = data.already_streamed !== undefined ? 'valid' : 'unknown';
   
-  const expDate = user.exp_date ? new Date(parseInt(user.exp_date) * 1000).toLocaleDateString() : 'Unknown';
-  const isActive = user.status === 'Active' || user.status === 'active';
-  const maxConns = user.max_connections || 'N/A';
-  const activeConns = user.active_cons || '0';
-  const timezone = server.timezone || 'Unknown';
-  
-  resultsContainer.classList.remove('hidden');
-  resultsContainer.innerHTML = `
-    <div class="status-card success">
-      <div class="status-icon">✅</div>
-      <div class="status-title">Credentials Valid</div>
-      <div class="status-message">Account is ${isActive ? 'active' : 'inactive'}</div>
+  const resultsGrid = document.getElementById('stalkerResultsGrid');
+  resultsGrid.innerHTML = `
+    <div class="result-row">
+      <div class="result-label">Status</div>
+      <div class="result-value"><span class="status-badge status-${status}">Connected</span></div>
     </div>
-
-    <div class="card">
-      <div class="results-grid">
-        <div class="result-item">
-          <div class="result-label">Expiry Date</div>
-          <div class="result-value ${isExpiringSoon(user.exp_date) ? 'warning' : ''}">${expDate}</div>
-        </div>
-
-        <div class="result-item">
-          <div class="result-label">Max Connections</div>
-          <div class="result-value">${maxConns}</div>
-        </div>
-
-        <div class="result-item">
-          <div class="result-label">Active Connections</div>
-          <div class="result-value ${parseInt(activeConns) >= parseInt(maxConns) ? 'warning' : ''}">${activeConns}</div>
-        </div>
-
-        <div class="result-item">
-          <div class="result-label">Status</div>
-          <div class="result-value ${isActive ? 'success' : 'error'}">${user.status || 'Unknown'}</div>
-        </div>
-
-        <div class="result-item">
-          <div class="result-label">Server URL</div>
-          <div class="result-value" style="font-size: 11px">${escHtml(serverUrl)}</div>
-        </div>
-
-        <div class="result-item">
-          <div class="result-label">Timezone</div>
-          <div class="result-value">${timezone}</div>
-        </div>
-
-        ${server.url ? `
-        <div class="result-item">
-          <div class="result-label">Real URL</div>
-          <div class="result-value" style="font-size: 11px">${escHtml(server.url)}</div>
-        </div>
-        ` : ''}
-
-        ${server.port ? `
-        <div class="result-item">
-          <div class="result-label">Port</div>
-          <div class="result-value">${server.port}</div>
-        </div>
-        ` : ''}
-      </div>
+    <div class="result-row">
+      <div class="result-label">MAC Address</div>
+      <div class="result-value">${escHtml(mac)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Portal URL</div>
+      <div class="result-value">${escHtml(portalUrl)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Token</div>
+      <div class="result-value">${escHtml(token)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Random</div>
+      <div class="result-value">${escHtml(data.random || 'N/A')}</div>
     </div>
   `;
-}
 
-function showStalkerSuccess(data, serverUrl, mac) {
-  const account = data.js || {};
-  
-  resultsContainer.classList.remove('hidden');
-  resultsContainer.innerHTML = `
-    <div class="status-card success">
-      <div class="status-icon">✅</div>
-      <div class="status-title">MAC Valid</div>
-      <div class="status-message">Stalker portal access confirmed</div>
-    </div>
-
-    <div class="card">
-      <div class="results-grid">
-        <div class="result-item">
-          <div class="result-label">MAC Address</div>
-          <div class="result-value success">${escHtml(mac)}</div>
-        </div>
-
-        <div class="result-item">
-          <div class="result-label">Server URL</div>
-          <div class="result-value" style="font-size: 11px">${escHtml(serverUrl)}</div>
-        </div>
-
-        ${account.phone ? `
-        <div class="result-item">
-          <div class="result-label">Account ID</div>
-          <div class="result-value">${escHtml(account.phone)}</div>
-        </div>
-        ` : ''}
-
-        ${account.tariff_plan ? `
-        <div class="result-item">
-          <div class="result-label">Plan</div>
-          <div class="result-value">${escHtml(account.tariff_plan)}</div>
-        </div>
-        ` : ''}
-
-        ${account.status ? `
-        <div class="result-item">
-          <div class="result-label">Status</div>
-          <div class="result-value ${account.status == 1 ? 'success' : 'error'}">${account.status == 1 ? 'Active' : 'Inactive'}</div>
-        </div>
-        ` : ''}
-      </div>
-    </div>
-  `;
+  document.getElementById('stalkerResults').classList.remove('hidden');
 }
 
 // ─────────────────────────────────────────────
 // Utilities
 // ─────────────────────────────────────────────
-function isExpiringSoon(expTimestamp) {
-  if (!expTimestamp) return false;
-  const exp = new Date(parseInt(expTimestamp) * 1000);
-  const now = new Date();
-  const daysLeft = (exp - now) / (1000 * 60 * 60 * 24);
-  return daysLeft < 7 && daysLeft > 0;
-}
-
 const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 </script>
 </body>
