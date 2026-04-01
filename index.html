@@ -89,24 +89,34 @@
     .step.done { background: #00e5ff15; border-color: #00e5ff40; color: #00e5ff80; }
 
     /* ── Channel grid ── */
-    .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; max-height: 300px; overflow-y: auto; padding-right: 4px; }
+    .channel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; max-height: 360px; overflow-y: auto; padding-right: 4px; }
     .channel-item {
       display: flex; align-items: center; gap: 8px; padding: 8px 10px;
       border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
-      transition: all 0.12s; font-size: 11px; color: var(--text);
-      overflow: hidden; white-space: nowrap;
+      transition: all 0.12s; font-size: 11px; color: #e2e8f0;
+      min-width: 0;
     }
     .channel-item span {
-      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      flex: 1; min-width: 0; color: #e2e8f0;
     }
     .channel-item:hover { border-color: var(--green); background: var(--green-dim); }
     .channel-item.selected { border-color: var(--green); background: var(--green-dim); color: var(--green); }
     .channel-item input[type="checkbox"] { accent-color: var(--green); flex-shrink: 0; }
 
-    .category-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-    .tab { padding: 5px 12px; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 11px; color: var(--muted); transition: all 0.12s; }
-    .tab:hover { border-color: var(--green); color: var(--green); }
-    .tab.active { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+    .category-tabs { margin-bottom: 16px; }
+    .category-select {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 4px; padding: 9px 12px; color: #e2e8f0;
+      font-family: var(--mono); font-size: 12px; outline: none;
+      cursor: pointer; transition: border-color 0.15s;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300d4ff' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      padding-right: 32px;
+    }
+    .category-select:focus { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-dim); }
+    .category-select option { background: #0a1428; color: #e2e8f0; padding: 8px; }
 
     /* ── Console log ── */
     .console { background: #050709; border: 1px solid var(--border); border-radius: 4px; padding: 16px; height: 220px; overflow-y: auto; font-size: 12px; line-height: 1.7; }
@@ -216,7 +226,12 @@
       <div class="card-title">Select Channels to Test With</div>
       <div class="hint" style="margin-bottom:14px">Pick up to 10 channels. Tests run against each CDN using these channels as probes.</div>
 
-      <div class="category-tabs" id="categoryTabs"></div>
+      <div class="category-tabs">
+        <label style="display:block;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Category</label>
+        <select class="category-select" id="categoryTabs" onchange="loadCategory(this.value)">
+          <option value="">Loading categories...</option>
+        </select>
+      </div>
       <div class="channel-grid" id="channelGrid"></div>
 
       <hr class="section-divider" />
@@ -398,23 +413,21 @@ async function xtreamRequest(serverUrl, username, password, action) {
 function buildCategoryTabs() {
   const el = document.getElementById('categoryTabs');
   el.innerHTML = '';
-  state.categories.slice(0, 30).forEach(cat => {
-    const btn = document.createElement('div');
-    btn.className = 'tab';
-    btn.textContent = cat.category_name;
-    btn.onclick = () => loadCategory(cat.category_id);
-    btn.dataset.catId = cat.category_id;
-    el.appendChild(btn);
+  state.categories.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat.category_id;
+    opt.textContent = cat.category_name;
+    el.appendChild(opt);
   });
 }
 
 async function loadCategory(categoryId) {
+  if (!categoryId) return;
   state.activeCategoryId = categoryId;
 
-  // Highlight active tab
-  document.querySelectorAll('.tab').forEach(t => {
-    t.classList.toggle('active', t.dataset.catId === categoryId);
-  });
+  // Sync select if called programmatically
+  const sel = document.getElementById('categoryTabs');
+  if (sel.value !== categoryId) sel.value = categoryId;
 
   const grid = document.getElementById('channelGrid');
   grid.innerHTML = '<span style="color:var(--muted);font-size:12px"><span class="spinner"></span> Loading…</span>';
