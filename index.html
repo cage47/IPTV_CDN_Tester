@@ -23,7 +23,7 @@
       --display:  'Syne', sans-serif;
     }
 
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; -webkit-text-fill-color: var(--text); }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; }
 
     /* ── Scrollbar ── */
     ::-webkit-scrollbar { width: 6px; }
@@ -94,30 +94,15 @@
       display: flex; align-items: center; gap: 8px; padding: 8px 10px;
       border: 1px solid var(--border); border-radius: 4px; cursor: pointer;
       transition: all 0.12s; font-size: 11px; min-width: 0;
-      color: #c9d1d9 !important;
-      -webkit-text-fill-color: #c9d1d9 !important;
-    }
-    .channel-item * {
-      color: #c9d1d9 !important;
-      -webkit-text-fill-color: #c9d1d9 !important;
+      color: #c9d1d9;
     }
     .channel-item span {
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       flex: 1; min-width: 0;
-      color: #c9d1d9 !important;
-      -webkit-text-fill-color: #c9d1d9 !important;
+      color: inherit;
     }
-    .channel-item.selected, .channel-item.selected * {
-      color: #00d4ff !important;
-      -webkit-text-fill-color: #00d4ff !important;
-    }
-    .channel-item:hover, .channel-item:hover * {
-      color: #00d4ff !important;
-      -webkit-text-fill-color: #00d4ff !important;
-    }
-    .channel-item:hover { border-color: var(--green); background: var(--green-dim); color: #00d4ff !important; }
-    .channel-item:hover * { color: #00d4ff !important; }
-    .channel-item.selected { border-color: var(--green); background: var(--green-dim); color: var(--green); }
+    .channel-item.selected { border-color: var(--green); background: var(--green-dim); color: #00d4ff; }
+    .channel-item:hover { border-color: var(--green); background: var(--green-dim); color: #00d4ff; }
     .channel-item input[type="checkbox"] { accent-color: var(--green); flex-shrink: 0; }
 
     .category-tabs { margin-bottom: 16px; }
@@ -187,7 +172,7 @@
     .na { color: var(--muted); font-style: italic; }
     .hosting-badge { font-size: 10px; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; }
   
-    /* Gradient logo text - isolated so it never inherits down */
+    /* Gradient logo text — contained to this class only */
     .logo-gradient {
       font-family: var(--display);
       font-size: 22px;
@@ -197,16 +182,8 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      color: transparent;
       display: inline;
-      isolation: isolate;
-    }
-    /* Hard reset -webkit-text-fill-color everywhere else */
-    body, body * {
-      -webkit-text-fill-color: currentColor;
-    }
-    /* Re-allow only on the gradient class */
-    .logo-gradient {
-      -webkit-text-fill-color: transparent !important;
     }
 
   </style>
