@@ -443,7 +443,12 @@ async function displayXtreamResults(data, baseUrl) {
     statusText = 'Inactive';
   }
 
-  const expiry = info.exp_date || 'N/A';
+  let expiry = info.exp_date || 'N/A';
+  if (expiry !== 'N/A' && expiry !== 'expired' && !isNaN(expiry)) {
+    const d = new Date(Number(expiry) * 1000);
+    expiry = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+           + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  }
   const maxConn = info.max_connections || '1';
   const activeConn = info.active_cons || '0';
   const realUrl = baseUrl;
