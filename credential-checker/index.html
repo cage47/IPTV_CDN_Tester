@@ -337,7 +337,29 @@
     }
     .action-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); background: var(--green-dim); }
     .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .action-btn.is-obscured { border-color: var(--amber); color: var(--amber); background: #ffab0010; }
+
+    /* ── Per-field visibility toggle ── */
+    .result-value.has-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .field-toggle {
+      flex-shrink: 0;
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 1px 5px;
+      line-height: 1.4;
+      opacity: 0.55;
+      transition: color 0.15s, border-color 0.15s, opacity 0.15s;
+      font-family: var(--mono);
+    }
+    .field-toggle:hover { color: var(--green); border-color: var(--green); opacity: 1; }
+    .field-toggle.is-hidden { color: var(--amber); border-color: var(--amber); opacity: 1; }
 
     .hidden { display: none; }
 
@@ -420,7 +442,6 @@
         <div class="card hidden" id="xtreamResults">
           <div class="card-title">Account Details</div>
           <div class="results-actions">
-            <button class="action-btn" id="xtreamObscureBtn" onclick="toggleObscure('xtream')">👁 Hide Credentials</button>
             <button class="action-btn" id="xtreamCopyBtn" onclick="copyResults('xtream')">⧉ Copy</button>
             <button class="action-btn" id="xtreamShotBtn" onclick="screenshotResults('xtream')">⬛ Screenshot</button>
           </div>
@@ -475,7 +496,6 @@
         <div class="card hidden" id="stalkerResults">
           <div class="card-title">Account Details</div>
           <div class="results-actions">
-            <button class="action-btn" id="stalkerObscureBtn" onclick="toggleObscure('stalker')">👁 Hide Credentials</button>
             <button class="action-btn" id="stalkerCopyBtn" onclick="copyResults('stalker')">⧉ Copy</button>
             <button class="action-btn" id="stalkerShotBtn" onclick="screenshotResults('stalker')">⬛ Screenshot</button>
           </div>
@@ -679,12 +699,9 @@ async function displayXtreamResults(data, baseUrl) {
   const username = document.getElementById('xtreamUsername').value.trim();
   const password = document.getElementById('xtreamPassword').value.trim();
 
-  // Store credential state (reset obscure on new result)
+  // Store credential state (reset per-field obscure on new result)
   resultState.xtream.fields = { server: baseUrl, username, password };
-  resultState.xtream.obscured = false;
-  const ob = document.getElementById('xtreamObscureBtn');
-  ob.textContent = '👁 Hide Credentials';
-  ob.classList.remove('is-obscured');
+  resultState.xtream.obscured_fields = {};
 
   // Determine status
   let status = 'valid';
@@ -711,15 +728,24 @@ async function displayXtreamResults(data, baseUrl) {
     </div>
     <div class="result-row">
       <div class="result-label">Server URL</div>
-      <div class="result-value" data-field="server">${escHtml(baseUrl)}</div>
+      <div class="result-value has-toggle">
+        <span data-field="server">${escHtml(baseUrl)}</span>
+        <button class="field-toggle" onclick="toggleField('xtream','server',this)" title="Hide">👁</button>
+      </div>
     </div>
     <div class="result-row">
       <div class="result-label">Username</div>
-      <div class="result-value" data-field="username">${escHtml(username)}</div>
+      <div class="result-value has-toggle">
+        <span data-field="username">${escHtml(username)}</span>
+        <button class="field-toggle" onclick="toggleField('xtream','username',this)" title="Hide">👁</button>
+      </div>
     </div>
     <div class="result-row">
       <div class="result-label">Password</div>
-      <div class="result-value" data-field="password">${escHtml(password)}</div>
+      <div class="result-value has-toggle">
+        <span data-field="password">${escHtml(password)}</span>
+        <button class="field-toggle" onclick="toggleField('xtream','password',this)" title="Hide">👁</button>
+      </div>
     </div>
     <div class="result-row">
       <div class="result-label">Created</div>
@@ -935,12 +961,9 @@ function displayStalkerResults(data, portalUrl, mac) {
   const status = data.already_streamed !== undefined || token !== 'N/A' ? 'valid' : 'unknown';
   const statusText = status === 'valid' ? 'Registered' : 'Unknown';
 
-  // Store credential state (reset obscure on new result)
+  // Store credential state (reset per-field obscure on new result)
   resultState.stalker.fields = { portal: portalUrl, mac, token };
-  resultState.stalker.obscured = false;
-  const ob = document.getElementById('stalkerObscureBtn');
-  ob.textContent = '👁 Hide Credentials';
-  ob.classList.remove('is-obscured');
+  resultState.stalker.obscured_fields = {};
 
   const resultsGrid = document.getElementById('stalkerResultsGrid');
   resultsGrid.innerHTML = `
@@ -950,15 +973,24 @@ function displayStalkerResults(data, portalUrl, mac) {
     </div>
     <div class="result-row">
       <div class="result-label">Portal URL</div>
-      <div class="result-value" data-field="portal">${escHtml(portalUrl)}</div>
+      <div class="result-value has-toggle">
+        <span data-field="portal">${escHtml(portalUrl)}</span>
+        <button class="field-toggle" onclick="toggleField('stalker','portal',this)" title="Hide">👁</button>
+      </div>
     </div>
     <div class="result-row">
       <div class="result-label">MAC Address</div>
-      <div class="result-value" data-field="mac">${escHtml(mac)}</div>
+      <div class="result-value has-toggle">
+        <span data-field="mac">${escHtml(mac)}</span>
+        <button class="field-toggle" onclick="toggleField('stalker','mac',this)" title="Hide">👁</button>
+      </div>
     </div>
     <div class="result-row">
       <div class="result-label">Token</div>
-      <div class="result-value" data-field="token">${escHtml(token)}</div>
+      <div class="result-value has-toggle">
+        <span data-field="token">${escHtml(token)}</span>
+        <button class="field-toggle" onclick="toggleField('stalker','token',this)" title="Hide">👁</button>
+      </div>
     </div>
   `;
 
@@ -969,30 +1001,23 @@ function displayStalkerResults(data, portalUrl, mac) {
 // Credential result state (for obscure/copy/screenshot)
 // ─────────────────────────────────────────────
 const resultState = {
-  xtream:  { obscured: false, fields: {} },
-  stalker: { obscured: false, fields: {} }
+  xtream:  { fields: {}, obscured_fields: {} },
+  stalker: { fields: {}, obscured_fields: {} }
 };
 
 const MASK = '••••••••';
 
-function toggleObscure(type) {
+function toggleField(type, field, btn) {
   const state = resultState[type];
-  state.obscured = !state.obscured;
+  const isNowHidden = !(state.obscured_fields[field] ?? false);
+  state.obscured_fields[field] = isNowHidden;
 
   const gridId = type === 'xtream' ? 'xtreamResultsGrid' : 'stalkerResultsGrid';
-  document.getElementById(gridId).querySelectorAll('[data-field]').forEach(el => {
-    const real = state.fields[el.dataset.field] ?? '';
-    el.textContent = state.obscured ? MASK : real;
-  });
+  const span = document.getElementById(gridId).querySelector(`[data-field="${field}"]`);
+  if (span) span.textContent = isNowHidden ? MASK : (state.fields[field] ?? '');
 
-  const btn = document.getElementById(`${type}ObscureBtn`);
-  if (state.obscured) {
-    btn.textContent = '👁 Show Credentials';
-    btn.classList.add('is-obscured');
-  } else {
-    btn.textContent = '👁 Hide Credentials';
-    btn.classList.remove('is-obscured');
-  }
+  btn.classList.toggle('is-hidden', isNowHidden);
+  btn.title = isNowHidden ? 'Show' : 'Hide';
 }
 
 function copyResults(type) {
@@ -1007,12 +1032,14 @@ function copyResults(type) {
     if (!label) return;
     const valEl = row.querySelector('.result-value');
     if (!valEl) return;
-    // Obscurable fields: use mask or real value based on state
     let value;
-    if (valEl.dataset.field) {
-      value = state.obscured ? MASK : (state.fields[valEl.dataset.field] ?? '');
+    const span = valEl.querySelector('[data-field]');
+    if (span) {
+      // Per-field obscure: check individual field state
+      const field = span.dataset.field;
+      const isObs = state.obscured_fields[field] ?? false;
+      value = isObs ? MASK : (state.fields[field] ?? '');
     } else {
-      // Non-obscurable: prefer badge text, fall back to element text
       const badge = valEl.querySelector('.status-badge');
       value = badge ? badge.textContent.trim() : valEl.textContent.trim();
     }
