@@ -447,12 +447,12 @@
           <div class="info-panel-title">ℹ Possible Results &amp; Errors</div>
           <div class="info-items">
             <div class="info-item"><span class="info-badge ib-ok">Registered</span>The MAC address is known to the portal — a session token was returned. Streams should be accessible.</div>
-            <div class="info-item"><span class="info-badge ib-err">HTML / Error Page</span>Portal returned a web page instead of JSON. The MAC address is likely <strong>not registered</strong> on this portal.</div>
+            <div class="info-item"><span class="info-badge ib-err">HTML / Error Page</span>Portal returned a web page instead of JSON — the MAC address is likely not registered on this portal.</div>
             <div class="info-item"><span class="info-badge ib-err">401 / 403</span>Portal explicitly denied the MAC. It may be banned or belong to a different subscription tier.</div>
             <div class="info-item"><span class="info-badge ib-err">Empty Response</span>Portal returned no data — the MAC is not provisioned or the portal URL path is incorrect.</div>
-            <div class="info-item"><span class="info-badge ib-err">404</span>Portal URL is wrong. Stalker portals typically end in <code>/c</code> (e.g. <code>http://host/stalker_portal/c</code>).</div>
+            <div class="info-item"><span class="info-badge ib-err">404</span>Portal URL is wrong. Stalker portals typically end in /c — e.g. http://host/stalker_portal/c</div>
             <div class="info-item"><span class="info-badge ib-info">Token</span>A successful handshake returns a short-lived session token. This does not confirm ongoing subscription validity — only that the MAC is registered.</div>
-            <div class="info-item"><span class="info-badge ib-muted">MAC Format</span>Must be exactly <code>00:1A:79:XX:XX:XX</code>. MAG device MACs always start with <code>00:1A:79</code>.</div>
+            <div class="info-item"><span class="info-badge ib-muted">MAC Format</span>Must be exactly 00:1A:79:XX:XX:XX — MAG device MACs always start with 00:1A:79.</div>
           </div>
         </div>
       </div>
