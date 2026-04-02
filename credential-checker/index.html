@@ -405,18 +405,34 @@ document.getElementById('xtreamCheckBtn').addEventListener('click', async () => 
   try {
     const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(apiUrl);
     const response = await fetch(proxyUrl, { cache: 'no-store' });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+
+    const text = await response.text();
+
+    // Empty body = invalid credentials or unreachable server
+    if (!text || !text.trim()) {
+      alert(`Invalid account (HTTP ${response.status} — empty response)`);
+      return;
     }
 
-    const data = await response.json();
-    
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      // Server returned HTML or garbage (e.g. login redirect, error page)
+      alert(`Invalid account (HTTP ${response.status} — server did not return JSON)`);
+      return;
+    }
+
+    if (!response.ok) {
+      alert(`Invalid account (HTTP ${response.status})`);
+      return;
+    }
+
     // Check if valid
     if (data.user_info) {
       displayXtreamResults(data, baseUrl);
     } else {
-      alert('Invalid credentials or API response');
+      alert('Invalid account — credentials rejected by server');
     }
 
   } catch (error) {
@@ -636,22 +652,35 @@ document.getElementById('stalkerCheckBtn').addEventListener('click', async () =>
     // Stalker portal handshake
     const handshakeUrl = `${urlInput}/server/load.php?type=stb&action=handshake&JsHttpRequest=1-xml`;
     const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(handshakeUrl) + '&mac=' + encodeURIComponent(mac);
-    
-    const response = await fetch(proxyUrl, { 
-      cache: 'no-store',
-      headers: { 'X-User-Agent': 'Model: MAG250; Link: Ethernet' }
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+
+    const response = await fetch(proxyUrl, { cache: 'no-store' });
+
+    const text = await response.text();
+
+    // Empty body = invalid MAC or unreachable portal
+    if (!text || !text.trim()) {
+      alert(`Invalid account (HTTP ${response.status} — empty response)`);
+      return;
     }
 
-    const data = await response.json();
-    
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      // Server returned HTML or error page (common for unregistered MACs)
+      alert(`Invalid account (HTTP ${response.status} — server did not return JSON)`);
+      return;
+    }
+
+    if (!response.ok) {
+      alert(`Invalid account (HTTP ${response.status})`);
+      return;
+    }
+
     if (data.js) {
       displayStalkerResults(data.js, urlInput, mac);
     } else {
-      alert('Invalid MAC or portal response');
+      alert('Invalid account — MAC address not recognised by portal');
     }
 
   } catch (error) {

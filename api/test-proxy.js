@@ -13,6 +13,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid URL' });
   }
 
+  // Forward MAC address as a cookie for Stalker portal requests
+  const mac = req.query.mac;
+  const upstreamHeaders = {};
+  if (mac) {
+    upstreamHeaders['Cookie'] = `mac=${mac}`;
+    upstreamHeaders['User-Agent'] = 'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 241 Safari/533.3';
+    upstreamHeaders['X-User-Agent'] = 'Model: MAG250; Link: Ethernet';
+  }
+
   try {
     const controller = new AbortController();
     // 8 second timeout to stay within Vercel's limits
@@ -22,6 +31,7 @@ export default async function handler(req, res) {
       method,
       signal: controller.signal,
       redirect: 'follow',
+      headers: upstreamHeaders,
     });
 
     clearTimeout(timeout);
