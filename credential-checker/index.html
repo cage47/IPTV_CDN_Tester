@@ -309,6 +309,36 @@
     .ib-info  { background: #7b8cff20; color: var(--blue);  }
     .ib-muted { background: var(--border); color: var(--muted); }
 
+    /* ── Results Action Bar ── */
+    .results-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding-bottom: 10px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .action-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+    .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .action-btn.is-obscured { border-color: var(--amber); color: var(--amber); background: #ffab0010; }
+
     .hidden { display: none; }
 
     .tab-content { display: none; }
@@ -389,6 +419,11 @@
         <!-- Xtream Results -->
         <div class="card hidden" id="xtreamResults">
           <div class="card-title">Account Details</div>
+          <div class="results-actions">
+            <button class="action-btn" id="xtreamObscureBtn" onclick="toggleObscure('xtream')">👁 Hide Credentials</button>
+            <button class="action-btn" id="xtreamCopyBtn" onclick="copyResults('xtream')">⧉ Copy</button>
+            <button class="action-btn" id="xtreamShotBtn" onclick="screenshotResults('xtream')">⬛ Screenshot</button>
+          </div>
           <div class="results-grid" id="xtreamResultsGrid"></div>
         </div>
 
@@ -439,6 +474,11 @@
         <!-- Stalker Results -->
         <div class="card hidden" id="stalkerResults">
           <div class="card-title">Account Details</div>
+          <div class="results-actions">
+            <button class="action-btn" id="stalkerObscureBtn" onclick="toggleObscure('stalker')">👁 Hide Credentials</button>
+            <button class="action-btn" id="stalkerCopyBtn" onclick="copyResults('stalker')">⧉ Copy</button>
+            <button class="action-btn" id="stalkerShotBtn" onclick="screenshotResults('stalker')">⬛ Screenshot</button>
+          </div>
           <div class="results-grid" id="stalkerResultsGrid"></div>
         </div>
 
@@ -636,6 +676,15 @@ function fmtUnix(ts) {
 async function displayXtreamResults(data, baseUrl) {
   const info = data.user_info || {};
   const serverInfo = data.server_info || {};
+  const username = document.getElementById('xtreamUsername').value.trim();
+  const password = document.getElementById('xtreamPassword').value.trim();
+
+  // Store credential state (reset obscure on new result)
+  resultState.xtream.fields = { server: baseUrl, username, password };
+  resultState.xtream.obscured = false;
+  const ob = document.getElementById('xtreamObscureBtn');
+  ob.textContent = '👁 Hide Credentials';
+  ob.classList.remove('is-obscured');
 
   // Determine status
   let status = 'valid';
@@ -647,12 +696,11 @@ async function displayXtreamResults(data, baseUrl) {
     status = 'invalid';
   }
 
-  let expiry = info.exp_date === 'expired' ? 'Expired' : fmtUnix(info.exp_date);
-  let created = fmtUnix(info.created_at);
-
-  const maxConn = info.max_connections ?? 'N/A';
+  const expiry  = info.exp_date === 'expired' ? 'Expired' : fmtUnix(info.exp_date);
+  const created = fmtUnix(info.created_at);
+  const maxConn  = info.max_connections ?? 'N/A';
   const activeConn = info.active_cons ?? '0';
-  const port = serverInfo.port || new URL(baseUrl).port || '80';
+  const port     = serverInfo.port || new URL(baseUrl).port || '80';
   const timezone = serverInfo.timezone || 'N/A';
 
   const resultsGrid = document.getElementById('xtreamResultsGrid');
@@ -660,6 +708,18 @@ async function displayXtreamResults(data, baseUrl) {
     <div class="result-row">
       <div class="result-label">Status</div>
       <div class="result-value"><span class="status-badge status-${status}">${escHtml(statusText)}</span></div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Server URL</div>
+      <div class="result-value" data-field="server">${escHtml(baseUrl)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Username</div>
+      <div class="result-value" data-field="username">${escHtml(username)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Password</div>
+      <div class="result-value" data-field="password">${escHtml(password)}</div>
     </div>
     <div class="result-row">
       <div class="result-label">Created</div>
@@ -671,11 +731,7 @@ async function displayXtreamResults(data, baseUrl) {
     </div>
     <div class="result-row">
       <div class="result-label">Connections</div>
-      <div class="result-value">${escHtml(activeConn)} active / ${escHtml(maxConn)} max</div>
-    </div>
-    <div class="result-row">
-      <div class="result-label">Server URL</div>
-      <div class="result-value">${escHtml(baseUrl)}</div>
+      <div class="result-value">${escHtml(String(activeConn))} active / ${escHtml(String(maxConn))} max</div>
     </div>
     <div class="result-row">
       <div class="result-label">Port</div>
@@ -689,10 +745,6 @@ async function displayXtreamResults(data, baseUrl) {
 
   document.getElementById('xtreamResults').classList.remove('hidden');
 
-  // Fetch categories
-  const username = document.getElementById('xtreamUsername').value.trim();
-  const password = document.getElementById('xtreamPassword').value.trim();
-  
   try {
     const categories = await fetchCategories(baseUrl, username, password);
     displayCategories(categories);
@@ -883,6 +935,13 @@ function displayStalkerResults(data, portalUrl, mac) {
   const status = data.already_streamed !== undefined || token !== 'N/A' ? 'valid' : 'unknown';
   const statusText = status === 'valid' ? 'Registered' : 'Unknown';
 
+  // Store credential state (reset obscure on new result)
+  resultState.stalker.fields = { portal: portalUrl, mac, token };
+  resultState.stalker.obscured = false;
+  const ob = document.getElementById('stalkerObscureBtn');
+  ob.textContent = '👁 Hide Credentials';
+  ob.classList.remove('is-obscured');
+
   const resultsGrid = document.getElementById('stalkerResultsGrid');
   resultsGrid.innerHTML = `
     <div class="result-row">
@@ -890,16 +949,16 @@ function displayStalkerResults(data, portalUrl, mac) {
       <div class="result-value"><span class="status-badge status-${status}">${statusText}</span></div>
     </div>
     <div class="result-row">
-      <div class="result-label">MAC Address</div>
-      <div class="result-value">${escHtml(mac)}</div>
+      <div class="result-label">Portal URL</div>
+      <div class="result-value" data-field="portal">${escHtml(portalUrl)}</div>
     </div>
     <div class="result-row">
-      <div class="result-label">Portal URL</div>
-      <div class="result-value">${escHtml(portalUrl)}</div>
+      <div class="result-label">MAC Address</div>
+      <div class="result-value" data-field="mac">${escHtml(mac)}</div>
     </div>
     <div class="result-row">
       <div class="result-label">Token</div>
-      <div class="result-value">${escHtml(token)}</div>
+      <div class="result-value" data-field="token">${escHtml(token)}</div>
     </div>
   `;
 
@@ -907,9 +966,105 @@ function displayStalkerResults(data, portalUrl, mac) {
 }
 
 // ─────────────────────────────────────────────
+// Credential result state (for obscure/copy/screenshot)
+// ─────────────────────────────────────────────
+const resultState = {
+  xtream:  { obscured: false, fields: {} },
+  stalker: { obscured: false, fields: {} }
+};
+
+const MASK = '••••••••';
+
+function toggleObscure(type) {
+  const state = resultState[type];
+  state.obscured = !state.obscured;
+
+  const gridId = type === 'xtream' ? 'xtreamResultsGrid' : 'stalkerResultsGrid';
+  document.getElementById(gridId).querySelectorAll('[data-field]').forEach(el => {
+    const real = state.fields[el.dataset.field] ?? '';
+    el.textContent = state.obscured ? MASK : real;
+  });
+
+  const btn = document.getElementById(`${type}ObscureBtn`);
+  if (state.obscured) {
+    btn.textContent = '👁 Show Credentials';
+    btn.classList.add('is-obscured');
+  } else {
+    btn.textContent = '👁 Hide Credentials';
+    btn.classList.remove('is-obscured');
+  }
+}
+
+function copyResults(type) {
+  const state = resultState[type];
+  const gridId = type === 'xtream' ? 'xtreamResultsGrid' : 'stalkerResultsGrid';
+  const grid = document.getElementById(gridId);
+  const title = type === 'xtream' ? 'Xtream Account' : 'Stalker Account';
+
+  const lines = [`=== ${title} ===`];
+  grid.querySelectorAll('.result-row').forEach(row => {
+    const label = row.querySelector('.result-label')?.textContent?.trim();
+    if (!label) return;
+    const valEl = row.querySelector('.result-value');
+    if (!valEl) return;
+    // Obscurable fields: use mask or real value based on state
+    let value;
+    if (valEl.dataset.field) {
+      value = state.obscured ? MASK : (state.fields[valEl.dataset.field] ?? '');
+    } else {
+      // Non-obscurable: prefer badge text, fall back to element text
+      const badge = valEl.querySelector('.status-badge');
+      value = badge ? badge.textContent.trim() : valEl.textContent.trim();
+    }
+    lines.push(`${label.padEnd(16)} ${value}`);
+  });
+
+  const copyBtn = document.getElementById(`${type}CopyBtn`);
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const orig = copyBtn.textContent;
+    copyBtn.textContent = '✓ Copied!';
+    setTimeout(() => { copyBtn.textContent = orig; }, 1600);
+  }).catch(() => {
+    copyBtn.textContent = '✗ Failed';
+    setTimeout(() => { copyBtn.textContent = '⧉ Copy'; }, 1600);
+  });
+}
+
+async function screenshotResults(type) {
+  const cardId  = type === 'xtream' ? 'xtreamResults' : 'stalkerResults';
+  const shotBtn = document.getElementById(`${type}ShotBtn`);
+  const origText = shotBtn.textContent;
+  shotBtn.textContent = '...';
+  shotBtn.disabled = true;
+
+  try {
+    const card = document.getElementById(cardId);
+    const canvas = await html2canvas(card, {
+      backgroundColor: '#0a1428',
+      scale: 2,
+      logging: false,
+      useCORS: true
+    });
+    const link = document.createElement('a');
+    link.download = `${type}-account-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (e) {
+    console.error('Screenshot failed:', e);
+    shotBtn.textContent = '✗ Failed';
+    setTimeout(() => { shotBtn.textContent = origText; }, 1600);
+    return;
+  }
+
+  shotBtn.textContent = origText;
+  shotBtn.disabled = false;
+}
+
+// ─────────────────────────────────────────────
 // Utilities
 // ─────────────────────────────────────────────
 const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 </script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
