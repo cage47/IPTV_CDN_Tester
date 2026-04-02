@@ -94,17 +94,32 @@
     .btn-primary:hover:not(:disabled) { background: #40ffff; }
     .btn-primary:disabled { background: var(--muted); color: var(--bg); cursor: not-allowed; opacity: 0.6; }
 
+    /* ── Error Banner ── */
+    .error-banner {
+      display: none;
+      background: #ff174412;
+      border: 1px solid var(--red);
+      border-radius: 5px;
+      padding: 10px 14px;
+      color: var(--red);
+      font-size: 12px;
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+    .error-banner.visible { display: block; }
+    .error-banner .error-title { font-weight: 700; margin-bottom: 2px; }
+
     /* ── Results ── */
     .results-grid {
       display: grid;
-      gap: 10px;
+      gap: 4px;
     }
 
     .result-row {
       display: grid;
-      grid-template-columns: 140px 1fr;
-      gap: 12px;
-      padding: 10px 0;
+      grid-template-columns: 130px 1fr;
+      gap: 8px;
+      padding: 5px 0;
       border-bottom: 1px solid var(--border);
       font-size: 12px;
     }
@@ -116,15 +131,17 @@
     .result-label {
       color: var(--muted);
       font-size: 10px;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       font-weight: 500;
+      padding-top: 1px;
     }
 
     .result-value {
       color: var(--text);
       font-weight: 400;
       word-break: break-all;
+      font-size: 11px;
     }
 
     .status-badge {
@@ -275,6 +292,7 @@
           <button class="btn btn-primary" id="xtreamCheckBtn">
             <span id="xtreamBtnText">Check</span>
           </button>
+          <div class="error-banner" id="xtreamError"></div>
         </div>
 
         <!-- Xtream Results -->
@@ -308,6 +326,7 @@
           <button class="btn btn-primary" id="stalkerCheckBtn">
             <span id="stalkerBtnText">Check</span>
           </button>
+          <div class="error-banner" id="stalkerError"></div>
         </div>
 
         <!-- Stalker Results -->
@@ -371,6 +390,25 @@ function validateUrl(urlString) {
 }
 
 // ─────────────────────────────────────────────
+// Error helpers
+// ─────────────────────────────────────────────
+function showError(id, title, detail) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="error-title">${escHtml(title)}</div>${detail ? escHtml(detail) : ''}`;
+  el.classList.add('visible');
+}
+function clearError(id) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  el.classList.remove('visible');
+}
+function httpErrorLabel(status) {
+  const map = { 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found',
+                500:'Internal Server Error', 502:'Bad Gateway', 503:'Service Unavailable', 504:'Gateway Timeout' };
+  return map[status] ? `HTTP ${status} ${map[status]}` : `HTTP ${status}`;
+}
+
+// ─────────────────────────────────────────────
 // Xtream Checker
 // ─────────────────────────────────────────────
 document.getElementById('xtreamCheckBtn').addEventListener('click', async () => {
@@ -380,17 +418,18 @@ document.getElementById('xtreamCheckBtn').addEventListener('click', async () => 
   const btn = document.getElementById('xtreamCheckBtn');
   const btnText = document.getElementById('xtreamBtnText');
   const resultsCard = document.getElementById('xtreamResults');
-  const resultsGrid = document.getElementById('xtreamResultsGrid');
+
+  clearError('xtreamError');
 
   // Validation
   if (!urlInput || !username || !password) {
-    alert('All fields are required');
+    showError('xtreamError', 'All fields are required');
     return;
   }
 
   const urlCheck = validateUrl(urlInput);
   if (!urlCheck.valid) {
-    alert(`Invalid URL: ${urlCheck.error}`);
+    showError('xtreamError', 'Invalid URL', urlCheck.error);
     return;
   }
 
@@ -405,12 +444,17 @@ document.getElementById('xtreamCheckBtn').addEventListener('click', async () => 
   try {
     const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(apiUrl);
     const response = await fetch(proxyUrl, { cache: 'no-store' });
-
     const text = await response.text();
 
-    // Empty body = invalid credentials or unreachable server
     if (!text || !text.trim()) {
-      alert(`Invalid account (HTTP ${response.status} — empty response)`);
+      const label = httpErrorLabel(response.status);
+      if (response.status === 401 || response.status === 403) {
+        showError('xtreamError', 'Authentication Failed', `${label} — credentials were rejected by the server.`);
+      } else if (response.status === 404) {
+        showError('xtreamError', 'Server Not Found', `${label} — the URL may be incorrect or the server is offline.`);
+      } else {
+        showError('xtreamError', 'No Response From Server', `${label} — the server returned an empty body. The account may be inactive or the URL is incorrect.`);
+      }
       return;
     }
 
@@ -418,56 +462,75 @@ document.getElementById('xtreamCheckBtn').addEventListener('click', async () => 
     try {
       data = JSON.parse(text);
     } catch (e) {
-      // Server returned HTML or garbage (e.g. login redirect, error page)
-      alert(`Invalid account (HTTP ${response.status} — server did not return JSON)`);
+      // Server returned HTML (login redirect, error page) — almost always means bad creds
+      const label = httpErrorLabel(response.status);
+      if (response.status === 401 || response.status === 403) {
+        showError('xtreamError', 'Authentication Failed', `${label} — credentials were rejected.`);
+      } else {
+        showError('xtreamError', 'Invalid Credentials', `${label} — the server returned an error page instead of account data. The username or password is likely incorrect.`);
+      }
       return;
     }
 
+    // Server returned a non-2xx JSON error
     if (!response.ok) {
-      alert(`Invalid account (HTTP ${response.status})`);
+      const label = httpErrorLabel(response.status);
+      const msg = data.message || data.error || data.info || '';
+      showError('xtreamError', `Server Error — ${label}`, msg || 'Credentials may be invalid or the account does not exist.');
       return;
     }
 
-    // Check if valid
-    if (data.user_info) {
-      displayXtreamResults(data, baseUrl);
-    } else {
-      alert('Invalid account — credentials rejected by server');
+    // Server returned JSON but credentials were rejected (common on some panels)
+    if (!data.user_info) {
+      const msg = data.message || data.error || data.info || '';
+      showError('xtreamError', 'Invalid Credentials', msg || 'The server rejected the username or password.');
+      return;
     }
+
+    // Detect account-level issues before showing results
+    const uinfo = data.user_info;
+    if (uinfo.auth === 0 || uinfo.auth === '0') {
+      showError('xtreamError', 'Authentication Failed', 'The server explicitly rejected these credentials (auth=0).');
+      return;
+    }
+
+    displayXtreamResults(data, baseUrl);
 
   } catch (error) {
-    alert(`Error: ${error.message}`);
+    showError('xtreamError', 'Request Failed', error.message);
   } finally {
     btn.disabled = false;
     btnText.textContent = 'Check';
   }
 });
 
+function fmtUnix(ts) {
+  if (!ts || ts === 'null' || ts === '0' || ts === 0) return 'N/A';
+  const d = new Date(Number(ts) * 1000);
+  if (isNaN(d)) return String(ts);
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+       + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
 async function displayXtreamResults(data, baseUrl) {
   const info = data.user_info || {};
   const serverInfo = data.server_info || {};
-  
+
   // Determine status
   let status = 'valid';
-  let statusText = 'Active';
-  
+  let statusText = info.status || 'Active';
   if (info.status === 'Expired' || info.exp_date === 'expired') {
     status = 'expired';
     statusText = 'Expired';
-  } else if (info.status !== 'Active' && info.active_cons !== undefined) {
+  } else if (info.status && info.status !== 'Active') {
     status = 'invalid';
-    statusText = 'Inactive';
   }
 
-  let expiry = info.exp_date || 'N/A';
-  if (expiry !== 'N/A' && expiry !== 'expired' && !isNaN(expiry)) {
-    const d = new Date(Number(expiry) * 1000);
-    expiry = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-           + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  }
-  const maxConn = info.max_connections || '1';
-  const activeConn = info.active_cons || '0';
-  const realUrl = baseUrl;
+  let expiry = info.exp_date === 'expired' ? 'Expired' : fmtUnix(info.exp_date);
+  let created = fmtUnix(info.created_at);
+
+  const maxConn = info.max_connections ?? 'N/A';
+  const activeConn = info.active_cons ?? '0';
   const port = serverInfo.port || new URL(baseUrl).port || '80';
   const timezone = serverInfo.timezone || 'N/A';
 
@@ -475,27 +538,27 @@ async function displayXtreamResults(data, baseUrl) {
   resultsGrid.innerHTML = `
     <div class="result-row">
       <div class="result-label">Status</div>
-      <div class="result-value"><span class="status-badge status-${status}">${statusText}</span></div>
+      <div class="result-value"><span class="status-badge status-${status}">${escHtml(statusText)}</span></div>
     </div>
     <div class="result-row">
-      <div class="result-label">Expiry Date</div>
+      <div class="result-label">Created</div>
+      <div class="result-value">${escHtml(created)}</div>
+    </div>
+    <div class="result-row">
+      <div class="result-label">Expires</div>
       <div class="result-value">${escHtml(expiry)}</div>
     </div>
     <div class="result-row">
-      <div class="result-label">Max Connections</div>
-      <div class="result-value">${escHtml(maxConn)}</div>
+      <div class="result-label">Connections</div>
+      <div class="result-value">${escHtml(activeConn)} active / ${escHtml(maxConn)} max</div>
     </div>
     <div class="result-row">
-      <div class="result-label">Active Connections</div>
-      <div class="result-value">${escHtml(activeConn)}</div>
-    </div>
-    <div class="result-row">
-      <div class="result-label">Real URL</div>
-      <div class="result-value">${escHtml(realUrl)}</div>
+      <div class="result-label">Server URL</div>
+      <div class="result-value">${escHtml(baseUrl)}</div>
     </div>
     <div class="result-row">
       <div class="result-label">Port</div>
-      <div class="result-value">${escHtml(port)}</div>
+      <div class="result-value">${escHtml(String(port))}</div>
     </div>
     <div class="result-row">
       <div class="result-label">Timezone</div>
@@ -624,23 +687,24 @@ document.getElementById('stalkerCheckBtn').addEventListener('click', async () =>
   const btn = document.getElementById('stalkerCheckBtn');
   const btnText = document.getElementById('stalkerBtnText');
   const resultsCard = document.getElementById('stalkerResults');
-  const resultsGrid = document.getElementById('stalkerResultsGrid');
+
+  clearError('stalkerError');
 
   if (!urlInput || !mac) {
-    alert('All fields are required');
+    showError('stalkerError', 'All fields are required');
     return;
   }
 
   const urlCheck = validateUrl(urlInput);
   if (!urlCheck.valid) {
-    alert(`Invalid URL: ${urlCheck.error}`);
+    showError('stalkerError', 'Invalid URL', urlCheck.error);
     return;
   }
 
   // Validate MAC format
   const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
   if (!macRegex.test(mac)) {
-    alert('Invalid MAC address format');
+    showError('stalkerError', 'Invalid MAC Address', 'Expected format: 00:1A:79:XX:XX:XX');
     return;
   }
 
@@ -654,12 +718,17 @@ document.getElementById('stalkerCheckBtn').addEventListener('click', async () =>
     const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(handshakeUrl) + '&mac=' + encodeURIComponent(mac);
 
     const response = await fetch(proxyUrl, { cache: 'no-store' });
-
     const text = await response.text();
 
-    // Empty body = invalid MAC or unreachable portal
     if (!text || !text.trim()) {
-      alert(`Invalid account (HTTP ${response.status} — empty response)`);
+      const label = httpErrorLabel(response.status);
+      if (response.status === 401 || response.status === 403) {
+        showError('stalkerError', 'Access Denied', `${label} — this MAC address is not authorised on the portal.`);
+      } else if (response.status === 404) {
+        showError('stalkerError', 'Portal Not Found', `${label} — check that the portal URL is correct.`);
+      } else {
+        showError('stalkerError', 'No Response From Portal', `${label} — the portal returned an empty response. The MAC may not be registered.`);
+      }
       return;
     }
 
@@ -667,24 +736,32 @@ document.getElementById('stalkerCheckBtn').addEventListener('click', async () =>
     try {
       data = JSON.parse(text);
     } catch (e) {
-      // Server returned HTML or error page (common for unregistered MACs)
-      alert(`Invalid account (HTTP ${response.status} — server did not return JSON)`);
+      const label = httpErrorLabel(response.status);
+      if (response.status === 401 || response.status === 403) {
+        showError('stalkerError', 'Access Denied', `${label} — MAC address not authorised.`);
+      } else {
+        showError('stalkerError', 'Unregistered MAC / Portal Error', `${label} — the portal returned an error page instead of account data. The MAC address is likely not registered on this portal.`);
+      }
       return;
     }
 
     if (!response.ok) {
-      alert(`Invalid account (HTTP ${response.status})`);
+      const label = httpErrorLabel(response.status);
+      const msg = data.message || data.error || data.info || '';
+      showError('stalkerError', `Portal Error — ${label}`, msg || 'The MAC address may not be registered.');
       return;
     }
 
-    if (data.js) {
-      displayStalkerResults(data.js, urlInput, mac);
-    } else {
-      alert('Invalid account — MAC address not recognised by portal');
+    if (!data.js) {
+      const msg = data.message || data.error || data.info || '';
+      showError('stalkerError', 'MAC Not Recognised', msg || 'The portal did not return account data. The MAC address is not registered or the portal URL is incorrect.');
+      return;
     }
 
+    displayStalkerResults(data.js, urlInput, mac);
+
   } catch (error) {
-    alert(`Error: ${error.message}`);
+    showError('stalkerError', 'Request Failed', error.message);
   } finally {
     btn.disabled = false;
     btnText.textContent = 'Check';
@@ -693,13 +770,14 @@ document.getElementById('stalkerCheckBtn').addEventListener('click', async () =>
 
 function displayStalkerResults(data, portalUrl, mac) {
   const token = data.token || 'N/A';
-  const status = data.already_streamed !== undefined ? 'valid' : 'unknown';
-  
+  const status = data.already_streamed !== undefined || token !== 'N/A' ? 'valid' : 'unknown';
+  const statusText = status === 'valid' ? 'Registered' : 'Unknown';
+
   const resultsGrid = document.getElementById('stalkerResultsGrid');
   resultsGrid.innerHTML = `
     <div class="result-row">
       <div class="result-label">Status</div>
-      <div class="result-value"><span class="status-badge status-${status}">Connected</span></div>
+      <div class="result-value"><span class="status-badge status-${status}">${statusText}</span></div>
     </div>
     <div class="result-row">
       <div class="result-label">MAC Address</div>
@@ -712,10 +790,6 @@ function displayStalkerResults(data, portalUrl, mac) {
     <div class="result-row">
       <div class="result-label">Token</div>
       <div class="result-value">${escHtml(token)}</div>
-    </div>
-    <div class="result-row">
-      <div class="result-label">Random</div>
-      <div class="result-value">${escHtml(data.random || 'N/A')}</div>
     </div>
   `;
 
