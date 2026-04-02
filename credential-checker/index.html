@@ -218,6 +218,97 @@
       background: var(--green-dim);
     }
 
+    /* ── Collapsible Category Drawer ── */
+    .cat-drawer {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-top: 16px;
+      overflow: hidden;
+    }
+    .cat-drawer summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--bg);
+      user-select: none;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    .cat-drawer summary::-webkit-details-marker { display: none; }
+    .cat-drawer summary:hover { background: var(--green-dim); }
+    .cat-counts {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--muted);
+      letter-spacing: 0;
+      text-transform: none;
+      margin-left: auto;
+    }
+    .cat-arrow {
+      font-size: 10px;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .cat-drawer[open] .cat-arrow { transform: rotate(90deg); }
+    .cat-drawer-body {
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .cat-drawer-body::-webkit-scrollbar { width: 5px; }
+    .cat-drawer-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Info Panel ── */
+    .info-panel {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-top: 20px;
+      background: var(--bg);
+    }
+    .info-panel-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .info-items { display: flex; flex-direction: column; gap: 8px; }
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .info-badge {
+      flex-shrink: 0;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+    .ib-ok    { background: #00e5ff20; color: var(--green); }
+    .ib-warn  { background: #ffab0020; color: var(--amber); }
+    .ib-err   { background: #ff174420; color: var(--red);   }
+    .ib-info  { background: #7b8cff20; color: var(--blue);  }
+    .ib-muted { background: var(--border); color: var(--muted); }
+
     .hidden { display: none; }
 
     .tab-content { display: none; }
@@ -300,6 +391,22 @@
           <div class="card-title">Account Details</div>
           <div class="results-grid" id="xtreamResultsGrid"></div>
         </div>
+
+        <!-- Xtream Info Panel -->
+        <div class="info-panel">
+          <div class="info-panel-title">ℹ Possible Results &amp; Errors</div>
+          <div class="info-items">
+            <div class="info-item"><span class="info-badge ib-ok">Active</span>Account is valid — streams are accessible with the given credentials.</div>
+            <div class="info-item"><span class="info-badge ib-warn">Expired</span>Subscription has ended. Contact your provider to renew (<code>exp_date</code> is in the past or set to "expired").</div>
+            <div class="info-item"><span class="info-badge ib-err">Disabled</span>Account exists but has been suspended by the provider.</div>
+            <div class="info-item"><span class="info-badge ib-err">Auth Failed</span>Wrong username or password — the server returned <code>auth=0</code> or no <code>user_info</code> block.</div>
+            <div class="info-item"><span class="info-badge ib-err">401 / 403</span>Server explicitly rejected the credentials. Double-check username and password.</div>
+            <div class="info-item"><span class="info-badge ib-err">404</span>Server URL is wrong or the <code>/player_api.php</code> endpoint does not exist on this host.</div>
+            <div class="info-item"><span class="info-badge ib-err">Empty / HTML</span>Server returned a login page or empty body — usually means the credentials are invalid or the account is blocked.</div>
+            <div class="info-item"><span class="info-badge ib-muted">N/A Created</span>The server does not expose a <code>created_at</code> field — this is normal for some panels.</div>
+            <div class="info-item"><span class="info-badge ib-info">Categories</span>Live TV, VOD, and Series counts are fetched after a successful login. Expand the drawer to browse category names.</div>
+          </div>
+        </div>
       </div>
 
       <!-- Stalker Tab -->
@@ -333,6 +440,20 @@
         <div class="card hidden" id="stalkerResults">
           <div class="card-title">Account Details</div>
           <div class="results-grid" id="stalkerResultsGrid"></div>
+        </div>
+
+        <!-- Stalker Info Panel -->
+        <div class="info-panel">
+          <div class="info-panel-title">ℹ Possible Results &amp; Errors</div>
+          <div class="info-items">
+            <div class="info-item"><span class="info-badge ib-ok">Registered</span>The MAC address is known to the portal — a session token was returned. Streams should be accessible.</div>
+            <div class="info-item"><span class="info-badge ib-err">HTML / Error Page</span>Portal returned a web page instead of JSON. The MAC address is likely <strong>not registered</strong> on this portal.</div>
+            <div class="info-item"><span class="info-badge ib-err">401 / 403</span>Portal explicitly denied the MAC. It may be banned or belong to a different subscription tier.</div>
+            <div class="info-item"><span class="info-badge ib-err">Empty Response</span>Portal returned no data — the MAC is not provisioned or the portal URL path is incorrect.</div>
+            <div class="info-item"><span class="info-badge ib-err">404</span>Portal URL is wrong. Stalker portals typically end in <code>/c</code> (e.g. <code>http://host/stalker_portal/c</code>).</div>
+            <div class="info-item"><span class="info-badge ib-info">Token</span>A successful handshake returns a short-lived session token. This does not confirm ongoing subscription validity — only that the MAC is registered.</div>
+            <div class="info-item"><span class="info-badge ib-muted">MAC Format</span>Must be exactly <code>00:1A:79:XX:XX:XX</code>. MAG device MACs always start with <code>00:1A:79</code>.</div>
+          </div>
         </div>
       </div>
     </main>
@@ -628,54 +749,43 @@ async function fetchCategories(baseUrl, username, password) {
 
 function displayCategories(categories) {
   const resultsGrid = document.getElementById('xtreamResultsGrid');
-  
-  let categoriesHtml = '<div class="categories-section"><div class="categories-title">Available Categories</div>';
 
-  // Live TV
-  if (categories.live && categories.live.length > 0) {
-    categoriesHtml += `
+  const liveCt = categories.live?.length || 0;
+  const vodCt  = categories.vod?.length  || 0;
+  const serCt  = categories.series?.length || 0;
+  if (!liveCt && !vodCt && !serCt) return;
+
+  const countParts = [];
+  if (liveCt) countParts.push(`Live: ${liveCt}`);
+  if (vodCt)  countParts.push(`VOD: ${vodCt}`);
+  if (serCt)  countParts.push(`Series: ${serCt}`);
+
+  function catBlock(icon, label, list) {
+    if (!list || !list.length) return '';
+    return `
       <div class="category-type">
-        <div class="category-type-header">
-          📺 Live TV <span class="category-count">${categories.live.length}</span>
-        </div>
+        <div class="category-type-header">${icon} ${label} <span class="category-count">${list.length}</span></div>
         <div class="category-list">
-          ${categories.live.map(cat => `<div class="category-tag">${escHtml(cat.category_name)}</div>`).join('')}
+          ${list.map(c => `<div class="category-tag">${escHtml(c.category_name)}</div>`).join('')}
         </div>
-      </div>
-    `;
+      </div>`;
   }
 
-  // VOD
-  if (categories.vod && categories.vod.length > 0) {
-    categoriesHtml += `
-      <div class="category-type">
-        <div class="category-type-header">
-          🎬 Movies (VOD) <span class="category-count">${categories.vod.length}</span>
-        </div>
-        <div class="category-list">
-          ${categories.vod.map(cat => `<div class="category-tag">${escHtml(cat.category_name)}</div>`).join('')}
-        </div>
+  const drawerHtml = `
+    <details class="cat-drawer">
+      <summary>
+        Categories
+        <span class="cat-counts">${countParts.join(' · ')}</span>
+        <span class="cat-arrow">▶</span>
+      </summary>
+      <div class="cat-drawer-body">
+        ${catBlock('📺', 'Live TV', categories.live)}
+        ${catBlock('🎬', 'Movies (VOD)', categories.vod)}
+        ${catBlock('📺', 'Series', categories.series)}
       </div>
-    `;
-  }
+    </details>`;
 
-  // Series
-  if (categories.series && categories.series.length > 0) {
-    categoriesHtml += `
-      <div class="category-type">
-        <div class="category-type-header">
-          📺 Series <span class="category-count">${categories.series.length}</span>
-        </div>
-        <div class="category-list">
-          ${categories.series.map(cat => `<div class="category-tag">${escHtml(cat.category_name)}</div>`).join('')}
-        </div>
-      </div>
-    `;
-  }
-
-  categoriesHtml += '</div>';
-
-  resultsGrid.insertAdjacentHTML('beforeend', categoriesHtml);
+  resultsGrid.insertAdjacentHTML('beforeend', drawerHtml);
 }
 
 // ─────────────────────────────────────────────
