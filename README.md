@@ -1,47 +1,55 @@
-# 🚀 CDN Performance Tester
+**Network testing and account validation tools for IPTV — benchmark CDN performance, check credentials, and optimize your streaming setup, all from your browser.**
 
-**Test and compare multiple CDN endpoints for optimal IPTV streaming performance**
+A free, open-source toolkit that helps you find the fastest CDN endpoint for your IPTV service and validate your Xtream/Stalker credentials — no installation, no data collection, fully auditable.
 
-## 🌐 Web App — Try It Now
+## 🌐 Try It Now
 
 **No installation required.** Use the hosted web version directly in your browser:
 
-### 👉 [iptv-cdn-tester.vercel.app](https://iptv-cdn-tester.vercel.app/)
-
-The web app provides the same core functionality as the Python CLI — connect with your Xtream credentials, select channels, and test CDN endpoints — all from your browser with a visual interface and ranked results.
+### 👉 [theclosedcircuit.vercel.app](https://theclosedcircuit.vercel.app/)
 
 > **Concerned about credentials?** See the [Security & Privacy](#-security--privacy) section below. The app is fully open source, has no database, and you can verify every network request in your browser's DevTools — or self-host it yourself.
 
 ---
 
-## 📋 Overview
+## 🛠️ Tools
 
-CDN Performance Tester helps you find the best CDN endpoint for your IPTV streaming service. It integrates directly with the Xtream Codes API to discover channels and measure real-world performance across multiple CDN servers.
+### 🌐 CDN Performance Tester
 
-### Two Ways to Use It
+Benchmark multiple IPTV CDN endpoints side-by-side. Connect with your Xtream credentials, select channels as test probes, and get ranked results with latency, jitter, throughput, and hosting provider details. Export to CSV.
 
-| | Web App | Python CLI |
-|---|---|---|
-| **Install** | None — runs in your browser | Python 3.7+ required |
-| **Link** | [iptv-cdn-tester.vercel.app](https://iptv-cdn-tester.vercel.app/) | `python cdn_iptv_tester.py` |
-| **Best for** | Quick tests, sharing results, mobile | Power users, automation, scripting |
-| **Tests from** | Vercel server (proxy) | Your local machine |
-| **Export** | CSV download | CSV file |
+### 🔐 Credential Checker
 
-### ✨ Key Features
+Validate Xtream (username/password) and Stalker (MAC address) credentials instantly. See account status, expiry dates, connection limits, and browse available content categories — Live TV, VOD, and Series.
+
+### At a Glance
+
+| | CDN Tester | Credential Checker | Python CLI |
+|---|---|---|---|
+| **Install** | None — browser | None — browser | Python 3.7+ |
+| **Best for** | Finding fastest CDN | Checking account details | Automation, scripting |
+| **Protocols** | Xtream | Xtream + Stalker (MAC) | Xtream |
+| **Export** | CSV download | — | CSV file |
+| **Tests from** | Vercel proxy | Vercel proxy | Your local machine |
+
+---
+
+## ✨ Key Features
 
 - 🔍 **Automatic Channel Discovery** — Fetches categories and channels directly from Xtream API
 - 📊 **Comprehensive Metrics** — Measures latency, jitter, throughput, and connection reliability
 - 🌐 **Network Intelligence** — Identifies hosting providers (Cloudflare, AWS, Azure, etc.)
 - 🗺️ **Geolocation** — Shows server locations and ASN information
-- 📈 **Performance Ranking** — Automatically ranks CDN endpoints by performance
+- 📈 **Performance Ranking** — Automatically ranks CDN endpoints by weighted score
 - 💾 **CSV Export** — Saves detailed results for further analysis
+- 🔐 **Dual Protocol Support** — Validates both Xtream Codes and Stalker (MAC) credentials
+- 📺 **Category Browsing** — View Live TV, VOD, and Series catalogs with counts
 
 ---
 
 ## 🔒 Security & Privacy
 
-This tool requires your Xtream Codes credentials to function. Here's exactly how they're handled:
+Both tools require your IPTV credentials to function. Here's exactly how they're handled:
 
 ### No Database, No Storage
 
@@ -51,7 +59,7 @@ The web app has **no database** — no MongoDB, PostgreSQL, SQLite, or any other
 
 IPTV servers reject direct browser requests due to a browser security policy called CORS (Cross-Origin Resource Sharing). The proxy (`api/proxy.js`) is a standard workaround — it forwards your request to the IPTV server and pipes the response back. It does not extract, log, or store any part of your credentials or the response data.
 
-A second proxy (`api/test-proxy.js`) handles the CDN performance tests. This exists because Vercel serves the app over HTTPS, but most IPTV CDN endpoints use HTTP — browsers block these "mixed content" requests, so the proxy bridges the gap.
+A second proxy (`api/test-proxy.js`) handles the CDN performance tests and credential checks. This exists because Vercel serves the app over HTTPS, but most IPTV endpoints use HTTP — browsers block these "mixed content" requests, so the proxy bridges the gap.
 
 ### What the Proxy Logs
 
@@ -61,24 +69,28 @@ Nothing sensitive. The only logging is standard HTTP access logs (method, path, 
 
 - **Inspect the code** — Every file in this repo is exactly what runs on Vercel. Read `api/proxy.js` and `api/test-proxy.js` yourself — they're short and straightforward.
 - **Watch the network** — Open your browser's DevTools (`F12` → Network tab) while using the app. You'll see requests go only to your IPTV server (via `/api/proxy`) and CDN endpoints (via `/api/test-proxy`).
-- **Self-host it** — If you don't trust the hosted version, clone this repo and deploy it yourself (see [Self-Hosting](#self-hosting) below).
+- **Self-host it** — If you don't trust the hosted version, clone this repo and deploy it yourself (see [Self-Hosting](#%EF%B8%8F-self-hosting) below).
 
-### Project Structure (Web App)
+### Project Structure
 
 ```
-├── index.html          ← Entire frontend (single file, no build step)
+├── index.html                  ← Landing page / tool hub
+├── cdn-tester/
+│   └── index.html              ← CDN Performance Tester
+├── credential-checker/
+│   └── index.html              ← Credential Checker (Xtream + Stalker)
 ├── api/
-│   ├── proxy.js        ← CORS proxy for Xtream API calls
-│   └── test-proxy.js   ← Proxy for CDN latency/throughput tests
-├── vercel.json         ← Vercel routing config
-└── package.json        ← Module type declaration
+│   ├── proxy.js                ← CORS proxy for Xtream API calls
+│   └── test-proxy.js           ← Proxy for CDN tests & credential checks
+├── vercel.json                 ← Vercel routing config
+└── package.json                ← Module type declaration
 ```
 
 ---
 
-## 🌐 Web App Usage
+## 🌐 CDN Tester — Usage
 
-1. Go to [iptv-cdn-tester.vercel.app](https://iptv-cdn-tester.vercel.app/)
+1. Go to [theclosedcircuit.vercel.app/cdn-tester](https://theclosedcircuit.vercel.app/cdn-tester/)
 2. Enter your Xtream Codes server URL, username, and password
 3. Enter 2–10 CDN endpoints to compare (one per line, include `http://` or `https://`)
 4. Click **Connect & Fetch Channels**
@@ -95,7 +107,64 @@ For precise absolute measurements, use the Python CLI tool which tests directly 
 
 ---
 
-## 🎉 Latest Release (CLI) - v2.1.0
+## 🔐 Credential Checker — Usage
+
+1. Go to [theclosedcircuit.vercel.app/credential-checker](https://theclosedcircuit.vercel.app/credential-checker/)
+2. Choose the **Xtream / Single** or **Stalker (MAC)** tab
+3. For Xtream: enter the server URL, username, and password
+4. For Stalker: enter the portal URL and MAC address
+5. Click **Check**
+6. View account details: status, expiry, connections, and available categories
+
+---
+
+## 📊 Understanding CDN Results
+
+### Performance Metrics
+
+| Metric | What it measures | Good values |
+|---|---|---|
+| **Latency** | Round-trip time to the CDN | Lower is better (< 80ms) |
+| **Jitter** | Variation in latency | Lower is better (< 10ms) |
+| **Throughput** | Download speed from CDN | Higher is better (> 10 Mbps) |
+| **Success Rate** | How many channels responded | Higher is better |
+| **Score** | Weighted composite | Higher is better |
+
+### CSV Export Columns
+
+| Column | Description |
+|---|---|
+| `dns_entry` | CDN server URL |
+| `channel_id` | Channel stream ID |
+| `channel_name` | Channel name |
+| `timestamp` | Test time |
+| `avg_latency_ms` | Average ping time |
+| `jitter_ms` | Latency variation |
+| `throughput_mbps` | Download speed in Mbps |
+| `ip_address` | Server IP address |
+| `asn` | Autonomous System Number |
+| `geolocation` | Server location |
+| `hosting_provider` | Identified hosting service |
+| `success_rate` | Percentage of successful tests |
+| `error_message` | Error details (if any) |
+
+---
+
+## 🏗️ How CDN Testing Works
+
+1. **Credential Verification** — Validates Xtream Codes credentials
+2. **Category Discovery** — Fetches available channel categories via Xtream API
+3. **Channel Selection** — Lets you choose specific channels to test
+4. **DNS Resolution** — Resolves each CDN domain to IP addresses
+5. **ASN Lookup** — Identifies hosting provider and geolocation
+6. **Latency Testing** — Measures average ping time and jitter (5 pings per channel)
+7. **Throughput Testing** — Downloads stream data to measure speed
+8. **Performance Ranking** — Calculates overall score and ranks CDNs
+9. **Report Generation** — Creates detailed CSV and visual summary
+
+---
+
+## 🎉 Latest Release (CLI) — v2.1.0
 
 **What's New:**
 
@@ -156,52 +225,6 @@ python cdn_iptv_tester.py \
 
 ---
 
-## 📊 Understanding the Results
-
-### Performance Metrics
-
-| Metric | What it measures | Good values |
-|---|---|---|
-| **Latency** | Round-trip time to the CDN | Lower is better (< 80ms) |
-| **Jitter** | Variation in latency | Lower is better (< 10ms) |
-| **Throughput** | Download speed from CDN | Higher is better (> 10 Mbps) |
-| **Success Rate** | How many channels responded | Higher is better |
-| **Score** | Weighted composite | Higher is better |
-
-### CSV Export Columns
-
-| Column | Description |
-|---|---|
-| `dns_entry` | CDN server URL |
-| `channel_id` | Channel stream ID |
-| `channel_name` | Channel name |
-| `timestamp` | Test time |
-| `avg_latency_ms` | Average ping time |
-| `jitter_ms` | Latency variation |
-| `throughput_mbps` | Download speed in Mbps |
-| `ip_address` | Server IP address |
-| `asn` | Autonomous System Number |
-| `geolocation` | Server location |
-| `hosting_provider` | Identified hosting service |
-| `success_rate` | Percentage of successful tests |
-| `error_message` | Error details (if any) |
-
----
-
-## 🏗️ How It Works
-
-1. **Credential Verification** — Validates Xtream Codes credentials
-2. **Category Discovery** — Fetches available channel categories via Xtream API
-3. **Channel Selection** — Lets you choose specific channels to test
-4. **DNS Resolution** — Resolves each CDN domain to IP addresses
-5. **ASN Lookup** — Identifies hosting provider and geolocation
-6. **Latency Testing** — Measures average ping time and jitter (5 pings per channel)
-7. **Throughput Testing** — Downloads stream data to measure speed
-8. **Performance Ranking** — Calculates overall score and ranks CDNs
-9. **Report Generation** — Creates detailed CSV and visual summary
-
----
-
 ## 🖥️ Self-Hosting
 
 If you'd prefer to run the web app yourself rather than use the hosted version:
@@ -228,7 +251,7 @@ This runs the app locally at `http://localhost:3000` with the serverless functio
 
 ## 🌐 Supported Hosting Providers
 
-The tool automatically identifies these providers:
+The CDN tester automatically identifies these providers:
 
 **Cloud:** Cloudflare, AWS, Google Cloud, Microsoft Azure, Oracle Cloud, IBM Cloud, Alibaba Cloud
 
@@ -240,13 +263,21 @@ The tool automatically identifies these providers:
 
 ## ❓ Troubleshooting
 
-### Web App
+### CDN Tester (Web)
 
 | Problem | Solution |
 |---|---|
 | All tests show "unreachable" | Make sure CDN URLs include `http://` or `https://` |
 | "No categories returned" | Verify your credentials and server URL are correct |
 | Tests are slow | Each CDN × channel combination runs 5 latency pings + a throughput test — this is normal |
+
+### Credential Checker (Web)
+
+| Problem | Solution |
+|---|---|
+| "Invalid credentials or API response" | Double-check URL format (include port, e.g. `http://example.com:8080`) |
+| "Invalid MAC or portal response" | Verify MAC format (`00:1A:79:XX:XX:XX`) and portal URL |
+| Stalker check hangs | Some portals require specific user agents — the tool sends standard MAG headers |
 
 ### Python CLI
 
@@ -265,11 +296,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 When reporting issues, please include:
 
-- Which version (web app or CLI)
+- Which tool (CDN Tester, Credential Checker, or CLI)
 - Browser or Python version
 - Operating system
 - Complete error message
 - Steps to reproduce
+
+Join the community: [Discord](https://discord.gg/wXAtrTddkV)
 
 ---
 
@@ -290,4 +323,4 @@ This tool is intended for testing your own legal IPTV subscriptions. It does not
 
 ---
 
-**Made with ❤️ for the IPTV community**
+**Made with ❤️ for the IPTV community** · [GitHub](https://github.com/cage47/IPTV_CDN_Tester) · [Discord](https://discord.gg/wXAtrTddkV)
