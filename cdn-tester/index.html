@@ -151,6 +151,61 @@
     .perf-good { background: var(--green); }
     .perf-ok   { background: var(--amber); }
     .perf-bad  { background: var(--red); }
+    .text-good { color: var(--green); }
+    .text-ok   { color: var(--amber); }
+    .text-bad  { color: var(--red); }
+
+    /* ── Info Panel ── */
+    .info-panel {
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px 24px;
+      margin-top: 24px;
+      background: var(--bg);
+    }
+    .info-panel-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .info-section { margin-bottom: 16px; }
+    .info-section:last-child { margin-bottom: 0; }
+    .info-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--green);
+      margin-bottom: 8px;
+    }
+    .info-items { display: flex; flex-direction: column; gap: 7px; }
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .info-badge {
+      flex-shrink: 0;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+    .ib-ok    { background: #00e5ff20; color: var(--green); }
+    .ib-warn  { background: #ffab0020; color: var(--amber); }
+    .ib-err   { background: #ff174420; color: var(--red);   }
+    .ib-info  { background: #7b8cff20; color: var(--blue);  }
+    .ib-muted { background: var(--border); color: var(--muted); }
 
     .score-pill { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; }
     .score-good { background: #00e5ff20; color: var(--green); }
@@ -339,6 +394,41 @@
         <div class="spacer"></div>
         <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
         <button class="btn btn-primary btn-sm" onclick="handleRun()">Re-run Tests</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Panel -->
+  <div class="info-panel">
+    <div class="info-panel-title">ℹ Understanding CDN &amp; DNS Performance for IPTV</div>
+
+    <div class="info-section">
+      <div class="info-section-label">What this test measures</div>
+      <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px">Live IPTV travels from your provider through a Content Delivery Network (CDN) — a global grid of edge servers — before reaching your device. The quality of that path matters more than your raw internet speed. This tool measures it.</p>
+      <div class="info-items">
+        <div class="info-item"><span class="info-badge ib-ok">Latency</span>Round-trip time to the edge server. Affects channel start time and live-edge delay — how far behind real-time your stream is. Under 80ms is excellent; above 250ms produces sluggish channel switching and a noticeable live lag.</div>
+        <div class="info-item"><span class="info-badge ib-warn">Jitter</span>Variation in latency between packets — the hidden cause of most IPTV freezes. A steady 90ms connection beats a 40ms average that swings wildly. High jitter drains your player's buffer faster than the CDN can refill it. Under 15ms is ideal for live content.</div>
+        <div class="info-item"><span class="info-badge ib-ok">Throughput</span>Sustained data rate from the edge node. HD streams need 8–15 Mbps; 4K needs 25+ Mbps. Beyond your stream's bitrate, more speed doesn't improve quality — the score plateaus accordingly.</div>
+        <div class="info-item"><span class="info-badge ib-err">Success Rate</span>Whether the node responded correctly across all tested channels. A fast but flaky node is worse than a slower reliable one — intermittent failures cause hard drops that are jarring and hard to diagnose.</div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-label">Why your DNS resolver matters</div>
+      <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px">DNS is the step that decides which edge server you get routed to — and that choice has a bigger impact than most people realise. Think of it like asking for directions: a GPS that only knows your city sends you to the nearest branch, but one that knows your exact street finds the fastest route.</p>
+      <div class="info-items">
+        <div class="info-item"><span class="info-badge ib-info">ECS</span>CDNs use your DNS resolver's location as a hint to pick the best edge node for you. If your resolver is hosted far away, the CDN thinks you're somewhere you're not. Some privacy-focused resolvers strip location hints entirely, leaving the CDN to guess.</div>
+        <div class="info-item"><span class="info-badge ib-info">Cache Age</span>CDNs shift load between nodes constantly. A resolver that caches aggressively holds onto old answers — like following a map printed last year. The road still exists, but there may be a faster route you're missing.</div>
+        <div class="info-item"><span class="info-badge ib-muted">Same CDN, Different IP</span>Different DNS resolvers can return different IP addresses for the exact same hostname, each pointing to a different PoP with different performance. If all scores are poor, switching your DNS resolver (ISP default → 1.1.1.1 → 8.8.8.8) may route you to a better edge node without changing anything else.</div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-label">How to use the results</div>
+      <div class="info-items">
+        <div class="info-item"><span class="info-badge ib-ok">Top Rank</span>The top-ranked CDN URL is what your player should be configured to use.</div>
+        <div class="info-item"><span class="info-badge ib-warn">All Poor</span>If all scores are uniformly low, the bottleneck is likely your ISP's routing to the CDN — a DNS resolver change is the cheapest fix to try first.</div>
+        <div class="info-item"><span class="info-badge ib-muted">Score Weights</span>Success rate 35% · Jitter 25% · Latency 25% · Throughput 15% — weighted for live streaming where consistency matters more than peak speed.</div>
       </div>
     </div>
   </div>
@@ -643,18 +733,44 @@ async function measureThroughput(url, durationMs) {
 // ─────────────────────────────────────────────
 // Render results
 // ─────────────────────────────────────────────
+
+// Graduated scoring helpers — IPTV-realistic curves
+function scoreLatency(ms) {
+  if (ms >= 9999) return 0;
+  if (ms <= 50)  return 100;
+  if (ms <= 150) return 100 - ((ms - 50)  / 100) * 40;  // 100→60
+  if (ms <= 300) return 60  - ((ms - 150) / 150) * 40;  // 60→20
+  return Math.max(0, 20 - ((ms - 300) / 200) * 20);      // 20→0
+}
+function scoreJitter(ms) {
+  if (ms <= 0)   return 100;
+  if (ms <= 5)   return 100;
+  if (ms <= 20)  return 100 - ((ms - 5)  / 15) * 40;    // 100→60
+  if (ms <= 50)  return 60  - ((ms - 20) / 30) * 40;    // 60→20
+  return Math.max(0, 20 - ((ms - 50) / 50) * 20);        // 20→0
+}
+function scoreThroughput(mbps) {
+  if (mbps <= 1)  return 0;
+  if (mbps <= 5)  return ((mbps - 1) / 4) * 40;          // 0→40
+  if (mbps <= 15) return 40 + ((mbps - 5)  / 10) * 40;  // 40→80
+  if (mbps <= 30) return 80 + ((mbps - 15) / 15) * 15;  // 80→95
+  return Math.min(100, 95 + ((mbps - 30) / 20) * 5);    // 95→100
+}
+
 function renderResults() {
-  // Score = weighted: latency 50%, success 30%, throughput 20%
+  // Score = weighted: success 35%, jitter 25%, latency 25%, throughput 15%
   const scored = state.results.map(r => {
-    const lat  = r.latencies.length  ? avg(r.latencies) : 9999;
-    const jit  = r.jitters.length    ? avg(r.jitters)   : 0;
+    const lat  = r.latencies.length   ? avg(r.latencies)   : 9999;
+    const jit  = r.jitters.length     ? avg(r.jitters)     : 0;
     const tput = r.throughputs.length ? avg(r.throughputs) : 0;
     const succ = r.successes / state.selectedChannels.length;
-    // Lower latency = better, normalise
-    const latScore  = Math.max(0, 100 - lat);
-    const tputScore = Math.min(100, tput * 5);
+
+    const latScore  = scoreLatency(lat);
+    const jitScore  = scoreJitter(jit);
+    const tputScore = scoreThroughput(tput);
     const succScore = succ * 100;
-    const score = latScore * 0.5 + succScore * 0.3 + tputScore * 0.2;
+
+    const score = succScore * 0.35 + jitScore * 0.25 + latScore * 0.25 + tputScore * 0.15;
     return { ...r, avgLat: lat, avgJitter: jit, avgTput: tput, succ, score };
   }).sort((a, b) => b.score - a.score);
 
@@ -668,10 +784,11 @@ function renderResults() {
     const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-n';
     const latOk = r.avgLat < 9999;
     const latPct = latOk ? (1 - r.avgLat / maxLat) * 100 : 0;
-    const latColor = r.avgLat < 80 ? 'perf-good' : r.avgLat < 200 ? 'perf-ok' : 'perf-bad';
+    const latColor  = r.avgLat < 80  ? 'perf-good' : r.avgLat < 200 ? 'perf-ok' : 'perf-bad';
+    const jitColor  = r.avgJitter < 15 ? 'text-good' : r.avgJitter < 40 ? 'text-ok' : 'text-bad';
     const tputPct = maxTput > 0 ? (r.avgTput / maxTput) * 100 : 0;
-    const tputColor = r.avgTput > 10 ? 'perf-good' : r.avgTput > 2 ? 'perf-ok' : 'perf-bad';
-    const scoreClass = r.score > 65 ? 'score-good' : r.score > 35 ? 'score-ok' : 'score-bad';
+    const tputColor = r.avgTput > 15 ? 'perf-good' : r.avgTput > 5  ? 'perf-ok' : 'perf-bad';
+    const scoreClass = r.score > 80 ? 'score-good' : r.score > 50 ? 'score-ok' : 'score-bad';
     const hosting = r.geo?.org?.replace(/^AS\d+ /, '') || 'Unknown';
     const location = [r.geo?.city, r.geo?.country].filter(Boolean).join(', ') || '—';
 
@@ -682,9 +799,9 @@ function renderResults() {
       <td><span class="hosting-badge">${escHtml(hosting.slice(0,20))}</span></td>
       <td>${escHtml(location)}</td>
       <td>
-        ${latOk ? `<div class="perf-bar"><div class="perf-fill ${latColor}" style="width:${latPct.toFixed(1)}px;max-width:60px;width:${Math.max(latPct * 0.6, 2)}px"></div>${r.avgLat.toFixed(1)}ms</div>` : '<span class="na">n/a</span>'}
+        ${latOk ? `<div class="perf-bar"><div class="perf-fill ${latColor}" style="width:${Math.max(latPct * 0.6, 2)}px;max-width:60px"></div>${r.avgLat.toFixed(1)}ms</div>` : '<span class="na">n/a</span>'}
       </td>
-      <td>${r.avgJitter > 0 ? r.avgJitter.toFixed(1)+'ms' : '<span class="na">n/a</span>'}</td>
+      <td>${r.avgJitter > 0 ? `<span class="${jitColor}">${r.avgJitter.toFixed(1)}ms</span>` : '<span class="na">n/a</span>'}</td>
       <td>
         ${r.avgTput > 0 ? `<div class="perf-bar"><div class="perf-fill ${tputColor}" style="width:${Math.max(tputPct * 0.6, 2)}px;max-width:60px"></div>${r.avgTput.toFixed(1)} Mbps</div>` : '<span class="na">n/a*</span>'}
       </td>
