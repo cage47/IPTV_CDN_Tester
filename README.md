@@ -1,55 +1,54 @@
-**Network testing and account validation tools for IPTV — benchmark CDN performance, check credentials, and optimize your streaming setup, all from your browser.**
+# 🚀 CDN Performance Tester & Credential Checker
 
-A free, open-source toolkit that helps you find the fastest CDN endpoint for your IPTV service and validate your Xtream/Stalker credentials — no installation, no data collection, fully auditable.
+**Test and compare multiple CDN endpoints for optimal IPTV streaming performance, and validate your IPTV credentials instantly.**
 
-## 🌐 Try It Now
+## 🌐 Web App — Try It Now
 
 **No installation required.** Use the hosted web version directly in your browser:
 
-### 👉 [theclosedcircuit.vercel.app](https://theclosedcircuit.vercel.app/)
+### 👉 [iptv-cdn-tester.vercel.app](https://iptv-cdn-tester-cage47s-projects.vercel.app/)
+
+The web app provides the same core functionality as the Python CLI — connect with your Xtream credentials, select channels, and test CDN endpoints — all from your browser with a visual interface and ranked results. The new Credential Checker lets you validate Xtream and Stalker (MAC) accounts in seconds.
 
 > **Concerned about credentials?** See the [Security & Privacy](#-security--privacy) section below. The app is fully open source, has no database, and you can verify every network request in your browser's DevTools — or self-host it yourself.
 
 ---
 
-## 🛠️ Tools
+## 📋 Overview
 
-### 🌐 CDN Performance Tester
+This project provides two tools for the IPTV community:
 
-Benchmark multiple IPTV CDN endpoints side-by-side. Connect with your Xtream credentials, select channels as test probes, and get ranked results with latency, jitter, throughput, and hosting provider details. Export to CSV.
+**CDN Performance Tester** — Finds the best CDN endpoint for your IPTV service. It integrates directly with the Xtream Codes API to discover channels and measure real-world performance across multiple CDN servers.
 
-### 🔐 Credential Checker
+**Credential Checker** — Validates Xtream (username/password) and Stalker (MAC address) credentials. See account status, expiry dates, max connections, and browse available content categories at a glance.
 
-Validate Xtream (username/password) and Stalker (MAC address) credentials instantly. See account status, expiry dates, connection limits, and browse available content categories — Live TV, VOD, and Series.
+### Three Ways to Use It
 
-### At a Glance
-
-| | CDN Tester | Credential Checker | Python CLI |
+| | CDN Tester (Web) | Credential Checker (Web) | Python CLI |
 |---|---|---|---|
-| **Install** | None — browser | None — browser | Python 3.7+ |
-| **Best for** | Finding fastest CDN | Checking account details | Automation, scripting |
+| **Install** | None — runs in your browser | None — runs in your browser | Python 3.7+ required |
+| **Link** | [CDN Tester](https://iptv-cdn-tester-cage47s-projects.vercel.app/cdn-tester/) | [Credential Checker](https://iptv-cdn-tester-cage47s-projects.vercel.app/credential-checker/) | `python cdn_iptv_tester.py` |
 | **Protocols** | Xtream | Xtream + Stalker (MAC) | Xtream |
+| **Best for** | Finding fastest CDN, comparing endpoints | Quick account validation | Power users, automation, scripting |
+| **Tests from** | Vercel server (proxy) | Vercel server (proxy) | Your local machine |
 | **Export** | CSV download | — | CSV file |
-| **Tests from** | Vercel proxy | Vercel proxy | Your local machine |
 
----
-
-## ✨ Key Features
+### ✨ Key Features
 
 - 🔍 **Automatic Channel Discovery** — Fetches categories and channels directly from Xtream API
 - 📊 **Comprehensive Metrics** — Measures latency, jitter, throughput, and connection reliability
 - 🌐 **Network Intelligence** — Identifies hosting providers (Cloudflare, AWS, Azure, etc.)
 - 🗺️ **Geolocation** — Shows server locations and ASN information
-- 📈 **Performance Ranking** — Automatically ranks CDN endpoints by weighted score
+- 📈 **Performance Ranking** — Automatically ranks CDN endpoints by performance
 - 💾 **CSV Export** — Saves detailed results for further analysis
-- 🔐 **Dual Protocol Support** — Validates both Xtream Codes and Stalker (MAC) credentials
+- 🔐 **Credential Validation** — Check Xtream and Stalker (MAC) accounts instantly
 - 📺 **Category Browsing** — View Live TV, VOD, and Series catalogs with counts
 
 ---
 
 ## 🔒 Security & Privacy
 
-Both tools require your IPTV credentials to function. Here's exactly how they're handled:
+These tools require your IPTV credentials to function. Here's exactly how they're handled:
 
 ### No Database, No Storage
 
@@ -69,9 +68,9 @@ Nothing sensitive. The only logging is standard HTTP access logs (method, path, 
 
 - **Inspect the code** — Every file in this repo is exactly what runs on Vercel. Read `api/proxy.js` and `api/test-proxy.js` yourself — they're short and straightforward.
 - **Watch the network** — Open your browser's DevTools (`F12` → Network tab) while using the app. You'll see requests go only to your IPTV server (via `/api/proxy`) and CDN endpoints (via `/api/test-proxy`).
-- **Self-host it** — If you don't trust the hosted version, clone this repo and deploy it yourself (see [Self-Hosting](#%EF%B8%8F-self-hosting) below).
+- **Self-host it** — If you don't trust the hosted version, clone this repo and deploy it yourself (see [Self-Hosting](#self-hosting) below).
 
-### Project Structure
+### Project Structure (Web App)
 
 ```
 ├── index.html                  ← Landing page / tool hub
@@ -88,9 +87,9 @@ Nothing sensitive. The only logging is standard HTTP access logs (method, path, 
 
 ---
 
-## 🌐 CDN Tester — Usage
+## 🌐 CDN Tester — Web App Usage
 
-1. Go to [theclosedcircuit.vercel.app/cdn-tester](https://theclosedcircuit.vercel.app/cdn-tester/)
+1. Go to [iptv-cdn-tester.vercel.app/cdn-tester](https://iptv-cdn-tester.vercel.app/cdn-tester/)
 2. Enter your Xtream Codes server URL, username, and password
 3. Enter 2–10 CDN endpoints to compare (one per line, include `http://` or `https://`)
 4. Click **Connect & Fetch Channels**
@@ -107,14 +106,22 @@ For precise absolute measurements, use the Python CLI tool which tests directly 
 
 ---
 
-## 🔐 Credential Checker — Usage
+## 🔐 Credential Checker — Web App Usage
 
-1. Go to [theclosedcircuit.vercel.app/credential-checker](https://theclosedcircuit.vercel.app/credential-checker/)
+1. Go to [iptv-cdn-tester.vercel.app/credential-checker](https://iptv-cdn-tester-cage47s-projects.vercel.app/credential-checker/)
 2. Choose the **Xtream / Single** or **Stalker (MAC)** tab
-3. For Xtream: enter the server URL, username, and password
-4. For Stalker: enter the portal URL and MAC address
-5. Click **Check**
-6. View account details: status, expiry, connections, and available categories
+
+**For Xtream credentials:**
+1. Enter the server URL with port (e.g. `http://example.com:8080`)
+2. Enter your username and password
+3. Click **Check**
+4. View account status, expiry date, max/active connections, server info, and available categories (Live TV, VOD, Series) with counts
+
+**For Stalker (MAC) credentials:**
+1. Enter the portal URL (e.g. `http://example.com/stalker_portal/c`)
+2. Enter the MAC address (format: `00:1A:79:XX:XX:XX`)
+3. Click **Check**
+4. View connection status, token, and portal details
 
 ---
 
@@ -150,7 +157,9 @@ For precise absolute measurements, use the Python CLI tool which tests directly 
 
 ---
 
-## 🏗️ How CDN Testing Works
+## 🏗️ How It Works
+
+### CDN Tester
 
 1. **Credential Verification** — Validates Xtream Codes credentials
 2. **Category Discovery** — Fetches available channel categories via Xtream API
@@ -162,9 +171,16 @@ For precise absolute measurements, use the Python CLI tool which tests directly 
 8. **Performance Ranking** — Calculates overall score and ranks CDNs
 9. **Report Generation** — Creates detailed CSV and visual summary
 
+### Credential Checker
+
+1. **SSRF Protection** — Validates URLs and blocks private/internal addresses
+2. **API Request** — Connects to the Xtream `player_api.php` or Stalker `load.php` endpoint
+3. **Account Parsing** — Extracts status, expiry, connection limits, and server info
+4. **Category Fetch** — Retrieves Live, VOD, and Series category lists with counts
+
 ---
 
-## 🎉 Latest Release (CLI) — v2.1.0
+## 🎉 Latest Release (CLI) - v2.1.0
 
 **What's New:**
 
@@ -251,7 +267,7 @@ This runs the app locally at `http://localhost:3000` with the serverless functio
 
 ## 🌐 Supported Hosting Providers
 
-The CDN tester automatically identifies these providers:
+The tool automatically identifies these providers:
 
 **Cloud:** Cloudflare, AWS, Google Cloud, Microsoft Azure, Oracle Cloud, IBM Cloud, Alibaba Cloud
 
@@ -275,9 +291,9 @@ The CDN tester automatically identifies these providers:
 
 | Problem | Solution |
 |---|---|
-| "Invalid credentials or API response" | Double-check URL format (include port, e.g. `http://example.com:8080`) |
-| "Invalid MAC or portal response" | Verify MAC format (`00:1A:79:XX:XX:XX`) and portal URL |
-| Stalker check hangs | Some portals require specific user agents — the tool sends standard MAG headers |
+| "Invalid credentials or API response" | Double-check URL format — include the port (e.g. `http://example.com:8080`) |
+| "Invalid MAC or portal response" | Verify MAC format (`00:1A:79:XX:XX:XX`) and that the portal URL is correct |
+| Stalker check hangs | Some portals require specific user agents — the tool sends standard MAG250 headers |
 
 ### Python CLI
 
@@ -302,8 +318,6 @@ When reporting issues, please include:
 - Complete error message
 - Steps to reproduce
 
-Join the community: [Discord](https://discord.gg/wXAtrTddkV)
-
 ---
 
 ## 📜 License
@@ -323,4 +337,4 @@ This tool is intended for testing your own legal IPTV subscriptions. It does not
 
 ---
 
-**Made with ❤️ for the IPTV community** · [GitHub](https://github.com/cage47/IPTV_CDN_Tester) · [Discord](https://discord.gg/wXAtrTddkV)
+**Made with ❤️ for the IPTV community**
