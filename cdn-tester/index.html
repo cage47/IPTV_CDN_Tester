@@ -159,18 +159,16 @@
     .info-panel {
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 20px 24px;
+      padding: 16px 24px;
       margin-top: 24px;
       background: var(--bg);
     }
-    .info-panel-title {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 16px;
-    }
+    .info-panel summary { cursor: pointer; color: var(--text); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; list-style: none; display: flex; align-items: center; gap: 8px; }
+    .info-panel summary::-webkit-details-marker { display: none; }
+    .info-panel summary::before { content: 'ℹ'; font-size: 14px; }
+    .info-panel summary::after { content: '▸'; font-size: 10px; transition: transform 0.2s; margin-left: auto; }
+    .info-panel[open] summary::after { transform: rotate(90deg); }
+    .info-panel .panel-body { margin-top: 16px; }
     .info-section { margin-bottom: 16px; }
     .info-section:last-child { margin-bottom: 0; }
     .info-section-label {
@@ -431,8 +429,9 @@
   </div>
 
   <!-- Info Panel -->
-  <div class="info-panel">
-    <div class="info-panel-title">ℹ How This Test Works</div>
+  <details class="info-panel">
+    <summary>How This Test Works</summary>
+    <div class="panel-body">
 
     <div class="info-section">
       <div class="info-section-label">How to use this tool</div>
@@ -475,7 +474,9 @@
         <div class="info-item"><span class="info-badge ib-info">Device DNS</span>The test runs through a proxy with its own DNS resolution, but your player connects directly — meaning your device may route to a different server node than what was tested. Switching from your ISP's default DNS to 1.1.1.1 (Cloudflare) or 8.8.8.8 (Google) and flushing your DNS cache can sometimes resolve persistent playback issues that the test scores don't reflect.</div>
       </div>
     </div>
-  </div>
+
+    </div><!-- /.panel-body -->
+  </details>
 
 </div><!-- /.app -->
 
