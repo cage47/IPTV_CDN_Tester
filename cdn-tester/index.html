@@ -225,6 +225,35 @@
     .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--green-dim); border-top-color: var(--green); border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .na { color: var(--muted); font-style: italic; }
+
+    .nav-back {
+      display: inline-flex; align-items: center; gap: 6px; color: var(--muted);
+      text-decoration: none; font-size: 11px; letter-spacing: 0.05em;
+      text-transform: uppercase; transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--green); }
+    .community-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .community-btn:hover { border-color: #5865F2; color: #5865F2; }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
     .hosting-badge { font-size: 10px; color: var(--muted); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; }
 
     /* ── Security notice ── */
@@ -269,7 +298,10 @@
         <div class="tagline" style="margin-top:5px">Network performance tester for IPTV CDN endpoints · <a href="https://github.com/cage47/IPTV_CDN_Tester" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;border-bottom:1px dotted var(--muted)">open source</a></div>
       </div>
     </div>
-    <a href="/" style="display:inline-flex;align-items:center;gap:6px;color:var(--muted);text-decoration:none;font-size:11px;letter-spacing:0.05em;text-transform:uppercase;margin-top:8px;transition:color 0.2s;" onmouseover="this.style.color='var(--green)'" onmouseout="this.style.color='var(--muted)'">← Back to Tools</a>
+    <div class="header-nav">
+      <a href="/" class="nav-back">← Back to Tools</a>
+      <a href="https://discord.gg/wXAtrTddkV" target="_blank" rel="noopener" class="community-btn">💬 Join the Community</a>
+    </div>
   </header>
 
   <!-- Steps -->

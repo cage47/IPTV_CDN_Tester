@@ -46,6 +46,27 @@
       text-transform: uppercase; margin-top: 8px; transition: color 0.2s;
     }
     .nav-back:hover { color: var(--green); }
+    .community-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+    }
+    .community-btn:hover { border-color: #5865F2; color: #5865F2; }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
 
     /* ── Tabs ── */
     .tabs { display: flex; gap: 0; margin-bottom: 28px; }
@@ -397,7 +418,10 @@
         <a href="/">The Closed <span>Circuit</span></a><span class="cursor"></span>
       </div>
       <div class="tagline">Credential Checker</div>
-      <a href="/" class="nav-back">← Back to Tools</a>
+      <div class="header-nav">
+        <a href="/" class="nav-back">← Back to Tools</a>
+        <a href="https://discord.gg/wXAtrTddkV" target="_blank" rel="noopener" class="community-btn">💬 Join the Community</a>
+      </div>
     </header>
 
     <main>

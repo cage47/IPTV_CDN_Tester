@@ -165,6 +165,24 @@
       transition: color 0.2s;
     }
     footer a:hover { color: #40ffff; }
+
+    /* ── Community Button ── */
+    .community-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+    .community-btn:hover { border-color: #5865F2; color: #5865F2; }
   </style>
 </head>
 <body>
@@ -174,6 +192,7 @@
       
       <div class="logo">The Closed <span>Circuit</span><span class="cursor"></span></div>
       <div class="tagline">Network Tests and Account Checker</div>
+      <a href="https://discord.gg/wXAtrTddkV" target="_blank" rel="noopener" class="community-btn">💬 Join the Community</a>
     </header>
 
     <main class="tools-section">
@@ -212,8 +231,7 @@
 
     <footer>
       <p>Built for the IPTV community &middot; 
-        <a href="https://github.com/cage47/IPTV_CDN_Tester" target="_blank">GitHub</a> &middot;
-        <a href="https://discord.gg/wXAtrTddkV" target="_blank">Discord</a>
+        <a href="https://github.com/cage47/IPTV_CDN_Tester" target="_blank">GitHub</a>
       </p>
     </footer>
   </div>
