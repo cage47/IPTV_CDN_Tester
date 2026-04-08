@@ -360,7 +360,7 @@
   <div id="step2" class="hidden">
     <div class="card">
       <div class="card-title">Select Channels to Test With</div>
-      <div class="hint" style="margin-bottom:14px">Pick up to 10 channels. Tests run against each CDN using these channels as probes.</div>
+      <div class="hint" style="margin-bottom:14px">Pick up to 5 channels. Tests run against each CDN using these channels as probes.</div>
 
       <div class="category-tabs">
         <label style="display:block;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Category</label>
@@ -552,6 +552,12 @@ async function handleConnect() {
     return;
   }
 
+  const MAX_CDNS = 10;
+  if (cdnList.length > MAX_CDNS) {
+    showAlert(alertEl, `Too many CDN URLs — only the first ${MAX_CDNS} will be tested. Remove extras to clear this warning.`);
+    cdnList.splice(MAX_CDNS);
+  }
+
   // Spinner
   document.getElementById('connectSpinner').classList.remove('hidden');
   document.getElementById('connectBtn').disabled = true;
@@ -643,7 +649,7 @@ function renderChannelGrid(channels) {
 
 function toggleChannel(ch, checked, el) {
   if (checked) {
-    if (state.selectedChannels.length >= 10) {
+    if (state.selectedChannels.length >= 5) {
       el.querySelector('input').checked = false;
       return;
     }
@@ -654,7 +660,7 @@ function toggleChannel(ch, checked, el) {
     el.classList.remove('selected');
   }
   const count = state.selectedChannels.length;
-  document.getElementById('selectedCount').textContent = `${count} channel${count !== 1 ? 's' : ''} selected (max 10)`;
+  document.getElementById('selectedCount').textContent = `${count} channel${count !== 1 ? 's' : ''} selected (max 5)`;
   document.getElementById('runBtn').disabled = count === 0;
 }
 
@@ -662,6 +668,18 @@ function toggleChannel(ch, checked, el) {
 // Step 3 — Run Tests
 // ─────────────────────────────────────────────
 async function handleRun() {
+  const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+  const lastRun = parseInt(localStorage.getItem('cdn_last_run') || '0', 10);
+  const elapsed = Date.now() - lastRun;
+  if (elapsed < COOLDOWN_MS) {
+    const remaining = Math.ceil((COOLDOWN_MS - elapsed) / 60000);
+    const alertEl = document.getElementById('step1-alert');
+    showAlert(alertEl, `Please wait ${remaining} minute${remaining !== 1 ? 's' : ''} before running another test.`);
+    goToStep(2);
+    return;
+  }
+  localStorage.setItem('cdn_last_run', Date.now().toString());
+
   goToStep(3);
   document.getElementById('testingCard').classList.remove('hidden');
   document.getElementById('resultsCard').classList.add('hidden');
