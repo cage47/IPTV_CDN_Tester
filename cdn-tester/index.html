@@ -223,6 +223,7 @@
     .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--green-dim); border-top-color: var(--green); border-radius: 50%; animation: spin 0.6s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .na { color: var(--muted); font-style: italic; }
+    .dead-badge { display: inline-block; background: #ff174430; color: var(--red); border: 1px solid #ff174460; border-radius: 3px; padding: 1px 6px; font-size: 10px; letter-spacing: 0.1em; font-weight: 700; margin-right: 6px; }
 
     .nav-back {
       display: inline-flex; align-items: center; gap: 6px; color: var(--muted);
@@ -718,11 +719,16 @@ async function handleRun() {
         if (throughput !== null) cdnResult.throughputs.push(throughput);
         log(`  ✓ ${ch.name}  lat:${latency ? latency.toFixed(1)+'ms' : 'n/a'}  jitter:${jitter ? jitter.toFixed(1)+'ms' : 'n/a'}  tput:${throughput ? throughput.toFixed(1)+'Mbps' : 'n/a'}`, 'ok');
       } else {
-        log(`  ✗ ${ch.name}  — unreachable`, 'err');
+        log(`  ✗ ${ch.name}  — no response (server may be dead or blocking)`, 'err');
       }
       done++;
       setProgress((done / total) * 100, `Testing ${ch.name}…`);
     }
+
+    const isDead = cdnResult.successes === 0 && cdnResult.latencies.length === 0;
+    cdnResult.dead = isDead;
+    if (isDead) log(`  ✗ ${cdn}  — marked as DEAD (all requests failed with error status)`, 'err');
+
     state.results.push(cdnResult);
   }
 
@@ -764,7 +770,8 @@ async function pingUrl(url) {
   try {
     const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(url) + '&method=HEAD&_t=' + Date.now();
     const start = performance.now();
-    await fetch(proxyUrl, { cache: 'no-store' });
+    const res = await fetch(proxyUrl, { cache: 'no-store' });
+    if (res.status >= 400) return null; // 4xx/5xx = dead or error endpoint
     return performance.now() - start;
   } catch { return null; }
 }
@@ -823,6 +830,8 @@ function scoreThroughput(mbps) {
 function renderResults() {
   // Score = weighted: success 35%, jitter 25%, latency 25%, throughput 15%
   const scored = state.results.map(r => {
+    if (r.dead) return { ...r, avgLat: 9999, avgJitter: 0, avgTput: 0, succ: 0, score: 0 };
+
     const lat  = r.latencies.length   ? avg(r.latencies)   : 9999;
     const jit  = r.jitters.length     ? avg(r.jitters)     : 0;
     const tput = r.throughputs.length ? avg(r.throughputs) : 0;
@@ -835,7 +844,11 @@ function renderResults() {
 
     const score = succScore * 0.35 + jitScore * 0.25 + latScore * 0.25 + tputScore * 0.15;
     return { ...r, avgLat: lat, avgJitter: jit, avgTput: tput, succ, score };
-  }).sort((a, b) => b.score - a.score);
+  }).sort((a, b) => {
+    if (a.dead && !b.dead) return 1;
+    if (!a.dead && b.dead) return -1;
+    return b.score - a.score;
+  });
 
   const maxLat  = Math.max(...scored.map(r => r.avgLat).filter(v => v < 9999), 1);
   const maxTput = Math.max(...scored.map(r => r.avgTput), 0.01);
@@ -856,21 +869,35 @@ function renderResults() {
     const location = [r.geo?.city, r.geo?.country].filter(Boolean).join(', ') || '—';
 
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><span class="rank-badge ${rankClass}">${rank}</span></td>
-      <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(r.cdn)}">${escHtml(r.cdn)}</td>
-      <td><span class="hosting-badge">${escHtml(hosting.slice(0,20))}</span></td>
-      <td>${escHtml(location)}</td>
-      <td>
-        ${latOk ? `<div class="perf-bar"><div class="perf-fill ${latColor}" style="width:${Math.max(latPct * 0.6, 2)}px;max-width:60px"></div>${r.avgLat.toFixed(1)}ms</div>` : '<span class="na">n/a</span>'}
-      </td>
-      <td>${r.avgJitter > 0 ? `<span class="${jitColor}">${r.avgJitter.toFixed(1)}ms</span>` : '<span class="na">n/a</span>'}</td>
-      <td>
-        ${r.avgTput > 0 ? `<div class="perf-bar"><div class="perf-fill ${tputColor}" style="width:${Math.max(tputPct * 0.6, 2)}px;max-width:60px"></div>${r.avgTput.toFixed(1)} Mbps</div>` : '<span class="na">n/a*</span>'}
-      </td>
-      <td>${r.successes}/${state.selectedChannels.length}</td>
-      <td><span class="score-pill ${scoreClass}">${r.score.toFixed(0)}</span></td>
-    `;
+    if (r.dead) {
+      tr.style.opacity = '0.5';
+      tr.innerHTML = `
+        <td><span class="rank-badge rank-n">—</span></td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(r.cdn)}">${escHtml(r.cdn)}</td>
+        <td><span class="hosting-badge">${escHtml(hosting.slice(0,20))}</span></td>
+        <td>${escHtml(location)}</td>
+        <td colspan="4" style="color:var(--red);font-size:11px;letter-spacing:0.08em">
+          <span class="dead-badge">DEAD</span> All requests returned error status (4xx/5xx)
+        </td>
+        <td><span class="score-pill score-bad">0</span></td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(r.cdn)}">${escHtml(r.cdn)}</td>
+        <td><span class="hosting-badge">${escHtml(hosting.slice(0,20))}</span></td>
+        <td>${escHtml(location)}</td>
+        <td>
+          ${latOk ? `<div class="perf-bar"><div class="perf-fill ${latColor}" style="width:${Math.max(latPct * 0.6, 2)}px;max-width:60px"></div>${r.avgLat.toFixed(1)}ms</div>` : '<span class="na">n/a</span>'}
+        </td>
+        <td>${r.avgJitter > 0 ? `<span class="${jitColor}">${r.avgJitter.toFixed(1)}ms</span>` : '<span class="na">n/a</span>'}</td>
+        <td>
+          ${r.avgTput > 0 ? `<div class="perf-bar"><div class="perf-fill ${tputColor}" style="width:${Math.max(tputPct * 0.6, 2)}px;max-width:60px"></div>${r.avgTput.toFixed(1)} Mbps</div>` : '<span class="na">n/a*</span>'}
+        </td>
+        <td>${r.successes}/${state.selectedChannels.length}</td>
+        <td><span class="score-pill ${scoreClass}">${r.score.toFixed(0)}</span></td>
+      `;
+    }
     tbody.appendChild(tr);
   });
 
