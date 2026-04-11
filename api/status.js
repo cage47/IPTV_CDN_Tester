@@ -24,14 +24,13 @@ export default async function handler(req, res) {
 
       const results = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
-      // Sanitize — strip credentials and obscure full DNS URLs
+      // Sanitize — strip all DNS/URL info, only expose status data
       const sanitized = results.map(p => ({
         id: p.id,
         name: p.name,
         checkedAt: p.checkedAt,
-        dns: p.dns.map(d => ({
-          // Show only the hostname, not the full URL with path/port details
-          host: safeHostname(d.url),
+        dns: p.dns.map((d, i) => ({
+          endpoint: i + 1,
           dnsResolves: d.dnsResolves,
           authOk: d.authOk,
           authError: d.authError || null,
@@ -64,8 +63,8 @@ export default async function handler(req, res) {
           timestamp: parsed.timestamp,
           providers: parsed.providers.map(p => ({
             id: p.id,
-            dns: p.dns.map(d => ({
-              host: safeHostname(d.url),
+            dns: p.dns.map((d, i) => ({
+              endpoint: i + 1,
               dnsResolves: d.dnsResolves,
               authOk: d.authOk,
               cloudflareBlocked: d.cloudflareBlocked || false,
