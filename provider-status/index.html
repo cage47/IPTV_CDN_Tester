@@ -188,7 +188,7 @@
   </div>
 
   <div class="footer-note">
-    Automated checks run every 20 minutes · Data retained for 7 days ·
+    Automated checks run every hour · Data retained for 7 days ·
     <a href="https://github.com/cage47/IPTV_CDN_Tester" target="_blank">GitHub</a> ·
     <a href="https://discord.gg/wXAtrTddkV" target="_blank">Discord</a>
   </div>
@@ -227,7 +227,7 @@ function render({ current, history }) {
         <div class="empty-title">No Status Data Yet</div>
         <div class="empty-desc">
           The status monitor hasn't run its first check yet.
-          Checks run automatically every 20 minutes — check back soon.
+          Checks run automatically every hour — check back soon.
         </div>
       </div>
     `;
@@ -324,26 +324,24 @@ function render({ current, history }) {
     `;
 
     // ── Per-DNS sections ──
-    provider.dns.forEach(dns => {
+    provider.dns.forEach((dns, dnsIdx) => {
       const dnsOnline = dns.channels.filter(c => c.status === 'online').length;
       const dnsTotal = dns.channels.length;
 
-      // Auth status indicators
-      let authIcon = '';
-      if (dns.cloudflareBlocked) authIcon = '<span style="color:var(--red)" title="Cloudflare blocked">🛡️</span>';
-      else if (!dns.dnsResolves) authIcon = '<span style="color:var(--red)" title="DNS failed">❌</span>';
-      else if (!dns.authOk) authIcon = '<span style="color:var(--amber)" title="Auth failed">⚠️</span>';
-      else authIcon = '<span style="color:var(--success)" title="Auth OK">✓</span>';
+      // Overall endpoint status icon
+      let statusIcon = '';
+      if (dns.cloudflareBlocked) statusIcon = '<span style="color:var(--red)" title="Cloudflare blocked">🛡️ CF Blocked</span>';
+      else if (!dns.dnsResolves) statusIcon = '<span style="color:var(--red)">❌ DNS Failed</span>';
+      else if (!dns.authOk) statusIcon = '<span style="color:var(--amber)">⚠️ Auth Failed</span>';
+      else if (dnsOnline === dnsTotal) statusIcon = '<span style="color:var(--success)">✓ Online</span>';
+      else statusIcon = '<span style="color:var(--amber)">⚠️ Degraded</span>';
 
       html += `<div class="dns-section">`;
       html += `
         <div class="dns-header">
-          ${authIcon}
-          <span class="dns-host">${esc(dns.host)}</span>
-          <span style="font-size:10px;color:var(--muted)">
-            DNS: ${dns.dnsResolves ? '✓' : '✗'} · Auth: ${dns.authOk ? '✓' : '✗'}
-          </span>
-          <span style="font-size:10px;color:var(--muted);margin-left:auto">${dnsOnline}/${dnsTotal}</span>
+          ${statusIcon}
+          <span class="dns-host">Endpoint ${dnsIdx + 1}</span>
+          <span style="font-size:10px;color:var(--muted);margin-left:auto">${dnsOnline}/${dnsTotal} streams</span>
         </div>
       `;
 
@@ -377,7 +375,7 @@ function render({ current, history }) {
     if (provHistory.length > 0) {
       html += `
         <div class="timeline-section">
-          <div class="timeline-label">Last ${provHistory.length} hours</div>
+          <div class="timeline-label">Uptime — Last 24 hours</div>
           <div class="timeline">
       `;
 
