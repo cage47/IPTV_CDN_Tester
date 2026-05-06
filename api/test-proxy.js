@@ -1,3 +1,6 @@
+const CF_WORKER_URL = process.env.CF_PROXY_URL || 'https://tv-proxy.ttpcountermeasures.workers.dev';
+const CF_PROXY_SECRET = process.env.CF_PROXY_SECRET || '';
+
 export default async function handler(req, res) {
   const targetUrl = req.query.url;
   const method = (req.query.method || 'GET').toUpperCase();
@@ -6,43 +9,52 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing url parameter' });
   }
 
-  // Basic validation
   try {
     new URL(targetUrl);
   } catch {
     return res.status(400).json({ error: 'Invalid URL' });
   }
 
-  // Forward MAC address as a cookie for Stalker portal requests
+  // Build upstream headers — MAC cookie forwarding for Stalker portal requests
   const mac = req.query.mac;
   const upstreamHeaders = {};
   if (mac) {
     upstreamHeaders['Cookie'] = `mac=${mac}`;
     upstreamHeaders['User-Agent'] = 'Mozilla/5.0 (QtEmbedded; U; Linux; C) AppleWebKit/533.3 (KHTML, like Gecko) MAG200 stbapp ver: 2 rev: 241 Safari/533.3';
     upstreamHeaders['X-User-Agent'] = 'Model: MAG250; Link: Ethernet';
+  } else {
+    upstreamHeaders['User-Agent'] = req.query.ua || 'TiviMate/4.4.0 (Linux; Android 11)';
   }
 
   try {
     const controller = new AbortController();
-    // 8 second timeout to stay within Vercel's limits
-    const timeout = setTimeout(() => controller.abort(), 8000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
 
-    const response = await fetch(targetUrl, {
-      method,
+    const response = await fetch(CF_WORKER_URL, {
+      method: 'POST',
       signal: controller.signal,
-      redirect: 'follow',
-      headers: upstreamHeaders,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Proxy-Secret': CF_PROXY_SECRET,
+      },
+      body: JSON.stringify({
+        url: targetUrl,
+        method: method,
+        headers: upstreamHeaders,
+      }),
     });
 
     clearTimeout(timeout);
 
     if (method === 'HEAD') {
-      // For ping tests — just return status, no body needed
-      return res.status(response.status).end();
+      const originalStatus = response.headers.get('x-original-status');
+      return res.status(parseInt(originalStatus) || response.status).end();
     }
 
-    // For throughput tests — stream the response body back
-    res.setHeader('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
+    const contentType = response.headers.get('x-original-content-type') ||
+                        response.headers.get('content-type') ||
+                        'application/octet-stream';
+    res.setHeader('Content-Type', contentType);
 
     if (response.body) {
       const reader = response.body.getReader();
@@ -52,9 +64,7 @@ export default async function handler(req, res) {
           if (done) break;
           res.write(Buffer.from(value));
         }
-      } catch (e) {
-        // Client disconnected or abort — that's fine
-      }
+      } catch (e) {}
     }
     res.end();
   } catch (e) {
