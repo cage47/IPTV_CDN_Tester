@@ -1,19 +1,51 @@
 const CF_WORKER_URL = process.env.CF_PROXY_URL || 'https://tv-proxy.ttpcountermeasures.workers.dev';
 const CF_PROXY_SECRET = process.env.CF_PROXY_SECRET || '';
 
+async function fetchDirect(targetUrl, method, headers) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(targetUrl, {
+      method,
+      signal: controller.signal,
+      redirect: 'follow',
+      headers,
+    });
+    clearTimeout(timeout);
+    return response;
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
+async function fetchViaWorker(targetUrl, method, headers) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const response = await fetch(CF_WORKER_URL, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Proxy-Secret': CF_PROXY_SECRET,
+      },
+      body: JSON.stringify({ url: targetUrl, method, headers }),
+    });
+    clearTimeout(timeout);
+    return response;
+  } catch (e) {
+    clearTimeout(timeout);
+    throw e;
+  }
+}
+
 export default async function handler(req, res) {
   const targetUrl = req.query.url;
   const method = (req.query.method || 'GET').toUpperCase();
 
-  if (!targetUrl) {
-    return res.status(400).json({ error: 'Missing url parameter' });
-  }
-
-  try {
-    new URL(targetUrl);
-  } catch {
-    return res.status(400).json({ error: 'Invalid URL' });
-  }
+  if (!targetUrl) return res.status(400).json({ error: 'Missing url parameter' });
+  try { new URL(targetUrl); } catch { return res.status(400).json({ error: 'Invalid URL' }); }
 
   // Build upstream headers — MAC cookie forwarding for Stalker portal requests
   const mac = req.query.mac;
@@ -26,54 +58,67 @@ export default async function handler(req, res) {
     upstreamHeaders['User-Agent'] = req.query.ua || 'TiviMate/4.4.0 (Linux; Android 11)';
   }
 
+  let response;
+  let viaWorker = false;
+
+  // Try direct first — fall back to CF Worker only if direct throws
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    response = await fetchDirect(targetUrl, method, upstreamHeaders);
+  } catch (directErr) {
+    try {
+      response = await fetchViaWorker(targetUrl, method, upstreamHeaders);
+      viaWorker = true;
+    } catch (workerErr) {
+      if (workerErr.name === 'AbortError') return res.status(504).json({ error: 'Upstream timeout' });
+      return res.status(502).json({ error: 'Both direct and proxy failed' });
+    }
+  }
 
-    const response = await fetch(CF_WORKER_URL, {
-      method: 'POST',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Proxy-Secret': CF_PROXY_SECRET,
-      },
-      body: JSON.stringify({
-        url: targetUrl,
-        method: method,
-        headers: upstreamHeaders,
-      }),
-    });
-
-    clearTimeout(timeout);
-
-    if (method === 'HEAD') {
+  // ── HEAD (ping/latency) ──────────────────────────────────────────────
+  if (method === 'HEAD') {
+    if (viaWorker) {
+      // CF Worker returns 200 with x-original-status when upstream responded
       const originalStatus = response.headers.get('x-original-status');
-      // If x-original-status is present, the CF Worker reached the upstream — server is alive.
-      // Return 200 regardless of what the upstream said (4xx/5xx on root paths is normal for IPTV).
-      // Only propagate a non-200 if the CF Worker itself failed to connect (no x-original-status).
       return res.status(originalStatus ? 200 : response.status).end();
     }
-
-    const contentType = response.headers.get('x-original-content-type') ||
-                        response.headers.get('content-type') ||
-                        'application/octet-stream';
-    res.setHeader('Content-Type', contentType);
-
-    if (response.body) {
-      const reader = response.body.getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          res.write(Buffer.from(value));
-        }
-      } catch (e) {}
-    }
-    res.end();
-  } catch (e) {
-    if (e.name === 'AbortError') {
-      return res.status(504).json({ error: 'Upstream timeout' });
-    }
-    return res.status(502).json({ error: e.message || 'Failed to reach upstream' });
+    // Direct: any upstream response means server is alive
+    return res.status(200).end();
   }
+
+  // ── GET (throughput) ─────────────────────────────────────────────────
+  let contentType;
+  if (viaWorker) {
+    contentType = response.headers.get('x-original-content-type') ||
+                  response.headers.get('content-type') ||
+                  'application/octet-stream';
+
+    // Detect Cloudflare 1003 block — small text/plain response with error code
+    if (contentType.includes('text/plain')) {
+      const text = await response.text();
+      if (text.includes('1003')) {
+        res.setHeader('X-Proxy-Blocked', 'true');
+        return res.status(403).end();
+      }
+      res.setHeader('Content-Type', contentType);
+      return res.end(text);
+    }
+  } else {
+    contentType = response.headers.get('content-type') || 'application/octet-stream';
+  }
+
+  res.setHeader('Content-Type', contentType);
+
+  if (response.body) {
+    const reader = response.body.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(Buffer.from(value));
+      }
+    } catch (e) {
+      // Client disconnected or abort — that's fine
+    }
+  }
+  res.end();
 }

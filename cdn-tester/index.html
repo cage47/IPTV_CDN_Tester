@@ -224,6 +224,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .na { color: var(--muted); font-style: italic; }
     .dead-badge { display: inline-block; background: #ff174430; color: var(--red); border: 1px solid #ff174460; border-radius: 3px; padding: 1px 6px; font-size: 10px; letter-spacing: 0.1em; font-weight: 700; margin-right: 6px; }
+    .blocked-badge { display: inline-block; background: #ffab0030; color: var(--amber); border: 1px solid #ffab0060; border-radius: 3px; padding: 1px 6px; font-size: 10px; letter-spacing: 0.1em; font-weight: 700; margin-right: 6px; }
 
     .nav-back {
       display: inline-flex; align-items: center; gap: 6px; color: var(--muted);
@@ -453,7 +454,12 @@
 
     <div class="info-section">
       <div class="info-section-label">How requests work</div>
-      <p style="font-size:11px;color:var(--muted);line-height:1.6">Your browser can't connect directly to IPTV servers due to browser security restrictions, so all test requests are routed through this app's proxy server. The proxy makes each request on your behalf and returns the result. Scores reflect performance between the proxy and each CDN endpoint — useful for comparing URLs against each other and identifying unreliable or slow nodes.</p>
+      <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:10px">Your browser can't connect directly to IPTV servers due to browser security restrictions, so all test requests are routed through this app's proxy server. The proxy makes each request on your behalf and returns the result. Scores reflect performance between the proxy and each CDN endpoint — useful for comparing URLs against each other and identifying unreliable or slow nodes.</p>
+      <div class="info-items">
+        <div class="info-item"><span class="info-badge ib-ok">Direct</span>The proxy first attempts a direct connection to each CDN. This works for the majority of providers and gives the most accurate results.</div>
+        <div class="info-item"><span class="info-badge ib-warn">CF Worker</span>If a direct connection fails (some providers block hosting provider IPs), the request is automatically retried through a Cloudflare Worker proxy. This handles most blocked providers.</div>
+        <div class="info-item"><span class="info-badge ib-err">Blocked</span>A small number of providers run their own servers behind Cloudflare's network. These restrict Cloudflare-to-Cloudflare requests, meaning neither proxy path can retrieve throughput data. These CDN URLs will show a BLOCKED result. Latency may still be measured. This is a network-level restriction and does not mean the URL is broken — it will likely work fine in your player.</div>
+      </div>
     </div>
 
     <div class="info-section">
@@ -711,13 +717,15 @@ async function handleRun() {
 
     for (const ch of selectedChannels) {
       const streamUrl = `${cdn}/${username}/${password}/${ch.stream_id}`;
-      const { latency, jitter, throughput, ok } = await testStream(streamUrl);
+      const { latency, jitter, throughput, ok, blocked } = await testStream(streamUrl);
       if (ok) {
         cdnResult.successes++;
         if (latency !== null) cdnResult.latencies.push(latency);
         if (jitter  !== null) cdnResult.jitters.push(jitter);
         if (throughput !== null) cdnResult.throughputs.push(throughput);
-        log(`  ✓ ${ch.name}  lat:${latency ? latency.toFixed(1)+'ms' : 'n/a'}  jitter:${jitter ? jitter.toFixed(1)+'ms' : 'n/a'}  tput:${throughput ? throughput.toFixed(1)+'Mbps' : 'n/a'}`, 'ok');
+        if (blocked) cdnResult.blocked = true;
+        const tputStr = blocked ? 'blocked' : (throughput ? throughput.toFixed(1)+'Mbps' : 'n/a');
+        log(`  ✓ ${ch.name}  lat:${latency ? latency.toFixed(1)+'ms' : 'n/a'}  jitter:${jitter ? jitter.toFixed(1)+'ms' : 'n/a'}  tput:${tputStr}`, 'ok');
       } else {
         log(`  ✗ ${ch.name}  — no response (server may be dead or blocking)`, 'err');
       }
@@ -762,8 +770,9 @@ async function testStream(url) {
 
   // 2. Throughput (via proxy — measures server-to-CDN bandwidth)
   const throughput = await measureThroughput(url, THROUGHPUT_MS);
+  const blocked = throughput === 'blocked';
 
-  return { latency: avgLat, jitter, throughput, ok: true };
+  return { latency: avgLat, jitter, throughput: blocked ? null : throughput, ok: true, blocked };
 }
 
 async function pingUrl(url) {
@@ -784,6 +793,8 @@ async function measureThroughput(url, durationMs) {
   try {
     const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(url) + '&_t=' + Date.now();
     const res = await fetch(proxyUrl, { signal: controller.signal, cache: 'no-store' });
+    // X-Proxy-Blocked means direct failed and CF Worker got a Cloudflare 1003 block
+    if (res.headers.get('x-proxy-blocked') === 'true') return 'blocked';
     const reader = res.body.getReader();
     while (true) {
       const { done, value } = await reader.read();
@@ -847,6 +858,8 @@ function renderResults() {
   }).sort((a, b) => {
     if (a.dead && !b.dead) return 1;
     if (!a.dead && b.dead) return -1;
+    if (a.blocked && !b.blocked) return 1;
+    if (!a.blocked && b.blocked) return -1;
     return b.score - a.score;
   });
 
@@ -880,6 +893,20 @@ function renderResults() {
           <span class="dead-badge">DEAD</span> All requests returned error status (4xx/5xx)
         </td>
         <td><span class="score-pill score-bad">0</span></td>
+      `;
+    } else if (r.blocked) {
+      tr.style.opacity = '0.7';
+      tr.innerHTML = `
+        <td><span class="rank-badge rank-n">—</span></td>
+        <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escHtml(r.cdn)}">${escHtml(r.cdn)}</td>
+        <td><span class="hosting-badge">${escHtml(hosting.slice(0,20))}</span></td>
+        <td>${escHtml(location)}</td>
+        <td>${latOk ? `<div class="perf-bar"><div class="perf-fill ${latColor}" style="width:${Math.max(latPct*0.6,2)}px;max-width:60px"></div>${r.avgLat.toFixed(1)}ms</div>` : '<span class="na">n/a</span>'}</td>
+        <td>${r.avgJitter > 0 ? `<span class="${jitColor}">${r.avgJitter.toFixed(1)}ms</span>` : '<span class="na">n/a</span>'}</td>
+        <td colspan="2" style="color:var(--amber);font-size:11px;letter-spacing:0.08em">
+          <span class="blocked-badge">BLOCKED</span> Provider restricts proxy access
+        </td>
+        <td><span class="score-pill score-bad">—</span></td>
       `;
     } else {
       tr.innerHTML = `
