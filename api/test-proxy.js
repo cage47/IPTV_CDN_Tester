@@ -48,7 +48,10 @@ export default async function handler(req, res) {
 
     if (method === 'HEAD') {
       const originalStatus = response.headers.get('x-original-status');
-      return res.status(parseInt(originalStatus) || response.status).end();
+      // If x-original-status is present, the CF Worker reached the upstream — server is alive.
+      // Return 200 regardless of what the upstream said (4xx/5xx on root paths is normal for IPTV).
+      // Only propagate a non-200 if the CF Worker itself failed to connect (no x-original-status).
+      return res.status(originalStatus ? 200 : response.status).end();
     }
 
     const contentType = response.headers.get('x-original-content-type') ||
