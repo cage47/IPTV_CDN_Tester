@@ -9,7 +9,6 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // CORS headers for frontend fetch
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
 
@@ -24,7 +23,6 @@ export default async function handler(req, res) {
 
       const results = typeof raw === 'string' ? JSON.parse(raw) : raw;
 
-      // Sanitize — strip all DNS/URL info, only expose status data
       const sanitized = results.map(p => ({
         id: p.id,
         name: p.name,
@@ -35,11 +33,8 @@ export default async function handler(req, res) {
           authOk: d.authOk,
           authError: d.authError || null,
           cloudflareBlocked: d.cloudflareBlocked || false,
-          channels: d.channels.map(c => ({
-            name: c.name,
-            status: c.status,
-            detail: c.detail,
-          })),
+          responseMs: d.responseMs || null,
+          account: d.account || null,
         })),
       }));
 
@@ -68,11 +63,7 @@ export default async function handler(req, res) {
               dnsResolves: d.dnsResolves,
               authOk: d.authOk,
               cloudflareBlocked: d.cloudflareBlocked || false,
-              online: d.online,
-              blocked: d.blocked,
-              black: d.black,
-              error: d.error,
-              total: d.total,
+              responseMs: d.responseMs || null,
             })),
           })),
         };
@@ -85,13 +76,5 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error('Status read error:', e);
     return res.status(500).json({ error: 'Failed to read status data' });
-  }
-}
-
-function safeHostname(url) {
-  try {
-    return new URL(url).hostname;
-  } catch {
-    return 'unknown';
   }
 }

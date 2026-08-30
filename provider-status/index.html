@@ -9,174 +9,217 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #060d1f;
-      --surface:  #0a1428;
-      --border:   #1a2744;
-      --green:    #00d4ff;
-      --green-dim:#00d4ff30;
-      --amber:    #ffab00;
-      --red:      #ff1744;
-      --blue:     #7b8cff;
-      --text:     #c9d1d9;
-      --muted:    #4a5568;
-      --mono:     'JetBrains Mono', monospace;
-      --display:  'Syne', sans-serif;
-      --success:  #00e676;
+      --bg:         #060d1f;
+      --surface:    #0a1428;
+      --surface2:   #0d1a35;
+      --border:     #1a2744;
+      --border2:    #243352;
+      --cyan:       #00d4ff;
+      --cyan-dim:   #00d4ff22;
+      --success:    #00e676;
+      --success-dim:#00e67618;
+      --amber:      #ffab00;
+      --amber-dim:  #ffab0018;
+      --red:        #ff1744;
+      --red-dim:    #ff174418;
+      --muted:      #4a5568;
+      --text:       #c9d1d9;
+      --text-bright:#e6edf3;
+      --mono:       'JetBrains Mono', monospace;
+      --display:    'Syne', sans-serif;
     }
 
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: var(--mono); font-size: 13px; }
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100%;
+    }
 
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
-    .app { max-width: 1100px; margin: 0 auto; padding: 32px 20px 80px; }
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .app { max-width: 1000px; margin: 0 auto; padding: 32px 20px 80px; }
 
     /* ── Header ── */
-    header { margin-bottom: 40px; border-bottom: 1px solid var(--border); padding-bottom: 24px; }
-    .header-row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-    .logo { font-family: var(--display); font-size: 26px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
-    .logo span { color: var(--green); }
-    .logo a { color: inherit; text-decoration: none; }
-    .tagline { color: var(--muted); font-size: 11px; margin-top: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
-    .cursor { display: inline-block; width: 8px; height: 14px; background: var(--green); margin-left: 3px; vertical-align: middle; animation: blink 1s step-end infinite; }
-    @keyframes blink { 50% { opacity: 0; } }
-    .nav-back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; margin-top: 8px; transition: color 0.2s; }
-    .nav-back:hover { color: var(--green); }
-    .spacer { flex: 1; }
-    .logo-gradient { font-family: var(--display); font-size: 16px; font-weight: 800; letter-spacing: -0.5px; background: linear-gradient(90deg, #00d4ff, #c040fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent; display: inline; }
-
-    /* ── Global status banner ── */
-    .global-banner {
-      border-radius: 8px; padding: 20px 24px; margin-bottom: 24px;
-      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    header {
+      margin-bottom: 36px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 20px;
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+      flex-wrap: wrap;
     }
-    .global-banner-ok { background: #00e67610; border: 1px solid #00e67640; }
-    .global-banner-degraded { background: #ffab0010; border: 1px solid #ffab0040; }
-    .global-banner-down { background: #ff174410; border: 1px solid #ff174440; }
-    .global-banner-unknown { background: var(--surface); border: 1px solid var(--border); }
-    .global-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-    .global-dot-ok { background: var(--success); box-shadow: 0 0 10px var(--success); }
-    .global-dot-degraded { background: var(--amber); box-shadow: 0 0 10px var(--amber); }
-    .global-dot-down { background: var(--red); box-shadow: 0 0 10px var(--red); }
-    .global-dot-unknown { background: var(--muted); }
-    .global-text { font-family: var(--display); font-size: 16px; font-weight: 700; color: #fff; }
-    .global-sub { font-size: 11px; color: var(--muted); margin-left: auto; }
+    .logo { font-family: var(--display); font-size: 24px; font-weight: 800; color: var(--text-bright); letter-spacing: -0.5px; }
+    .logo span { color: var(--cyan); }
+    .logo a { color: inherit; text-decoration: none; }
+    .tagline { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+    .cursor { display: inline-block; width: 8px; height: 14px; background: var(--cyan); margin-left: 3px; vertical-align: middle; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+    .header-right { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--muted); }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .nav-back { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; }
+    .nav-back:hover { color: var(--cyan); }
 
-    /* ── Auto-refresh indicator ── */
-    .refresh-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; font-size: 11px; color: var(--muted); }
-    .refresh-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s ease-in-out infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    /* ── Global banner ── */
+    .global-banner {
+      border-radius: 8px; padding: 18px 22px;
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 8px;
+    }
+    .banner-ok   { background: var(--success-dim); border: 1px solid #00e67635; }
+    .banner-deg  { background: var(--amber-dim);   border: 1px solid #ffab0035; }
+    .banner-down { background: var(--red-dim);     border: 1px solid #ff174435; }
+    .banner-none { background: var(--surface);     border: 1px solid var(--border); }
+    .banner-dot  { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+    .dot-ok   { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .dot-deg  { background: var(--amber);   box-shadow: 0 0 8px var(--amber); }
+    .dot-down { background: var(--red);     box-shadow: 0 0 8px var(--red); }
+    .dot-none { background: var(--muted); }
+    .banner-title { font-family: var(--display); font-size: 15px; font-weight: 700; color: var(--text-bright); }
+    .banner-meta  { margin-left: auto; font-size: 11px; color: var(--muted); text-align: right; line-height: 1.6; }
+
+    /* ── Methodology note ── */
+    .method-note {
+      font-size: 11px; color: var(--muted); line-height: 1.7;
+      padding: 10px 14px; margin-bottom: 28px;
+      border-left: 2px solid var(--border2);
+    }
+    .method-note strong { color: var(--text); }
+
+    /* ── Legend ── */
+    .legend { display: flex; gap: 18px; margin-bottom: 22px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
 
     /* ── Provider cards ── */
     .provider-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-      padding: 24px; margin-bottom: 20px; transition: border-color 0.3s;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 22px 24px; margin-bottom: 18px;
+      transition: border-color 0.2s;
     }
-    .provider-card:hover { border-color: #2a3f5f; }
-    .provider-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
-    .provider-name { font-family: var(--display); font-size: 18px; font-weight: 800; color: #fff; }
-    .provider-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-    .badge-online { background: #00e67615; color: var(--success); border: 1px solid #00e67640; }
-    .badge-degraded { background: #ffab0015; color: var(--amber); border: 1px solid #ffab0040; }
-    .badge-blocked { background: #ff174415; color: var(--red); border: 1px solid #ff174440; }
-    .badge-down { background: #4a556815; color: var(--muted); border: 1px solid var(--border); }
+    .provider-card:hover { border-color: var(--border2); }
+    .provider-header {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .provider-name { font-family: var(--display); font-size: 17px; font-weight: 800; color: var(--text-bright); }
+    .provider-meta { margin-left: auto; font-size: 11px; color: var(--muted); }
 
-    /* ── DNS section within provider ── */
-    .dns-section { margin-bottom: 16px; }
-    .dns-header {
-      display: flex; align-items: center; gap: 10px; padding: 10px 14px;
-      background: var(--bg); border: 1px solid var(--border); border-radius: 6px 6px 0 0;
-      font-size: 12px; flex-wrap: wrap;
+    /* ── Status badge ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; text-transform: uppercase;
     }
-    .dns-host { color: #fff; font-weight: 500; }
-    .dns-checks { display: flex; gap: 3px; margin-left: auto; }
-    .dns-check-dot {
-      width: 8px; height: 8px; border-radius: 2px; transition: background 0.3s;
-      title: attr(data-tip);
-    }
-    .dns-check-ok { background: var(--success); }
-    .dns-check-warn { background: var(--amber); }
-    .dns-check-fail { background: var(--red); }
-    .dns-check-none { background: #1a2744; }
+    .badge-dot { width: 5px; height: 5px; border-radius: 50%; }
+    .badge-ok   { background: var(--success-dim); color: var(--success); border: 1px solid #00e67630; }
+    .badge-ok   .badge-dot { background: var(--success); }
+    .badge-deg  { background: var(--amber-dim);   color: var(--amber);   border: 1px solid #ffab0030; }
+    .badge-deg  .badge-dot { background: var(--amber); }
+    .badge-down { background: var(--red-dim);     color: var(--red);     border: 1px solid #ff174430; }
+    .badge-down .badge-dot { background: var(--red); }
 
-    /* ── Channel results grid ── */
-    .channel-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1px;
-      background: var(--border); border: 1px solid var(--border); border-top: none;
-      border-radius: 0 0 6px 6px; overflow: hidden;
-    }
-    .ch-cell {
-      display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-      background: var(--bg); font-size: 11px; min-width: 0;
-    }
-    .ch-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-    .ch-dot-online { background: var(--success); box-shadow: 0 0 4px var(--success); }
-    .ch-dot-blocked { background: var(--red); box-shadow: 0 0 4px var(--red); }
-    .ch-dot-black { background: var(--amber); box-shadow: 0 0 4px var(--amber); }
-    .ch-dot-error { background: var(--muted); }
-    .ch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-    .ch-status { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+    /* ── Endpoint rows ── */
+    .endpoints { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .endpoint { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
 
-    /* ── Uptime timeline ── */
+    .endpoint-main {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; background: var(--bg);
+      flex-wrap: wrap;
+    }
+    .ep-status { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; }
+    .ep-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .ep-dot-ok   { background: var(--success); box-shadow: 0 0 5px var(--success); }
+    .ep-dot-fail { background: var(--red);     box-shadow: 0 0 5px var(--red); }
+    .ep-dot-muted { background: var(--muted); }
+    .ep-label { color: var(--text-bright); }
+    .ep-label-fail { color: var(--red); }
+    .ep-num { color: var(--muted); font-size: 11px; margin-left: auto; }
+    .ep-ms  { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .ep-ms span { color: var(--cyan); }
+
+    .endpoint-meta {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 7px 14px; background: var(--surface2);
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+    }
+    .ep-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 4px; font-size: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); letter-spacing: 0.03em;
+    }
+    .ep-chip-key { color: var(--muted); }
+    .ep-chip-val { color: var(--text); }
+    .ep-chip-active { border-color: #00e67630; }
+    .ep-chip-active .ep-chip-val { color: var(--success); }
+    .ep-chip-fail { border-color: #ff174430; }
+    .ep-chip-fail .ep-chip-val { color: var(--red); }
+    .ep-formats { display: flex; gap: 4px; margin-left: auto; }
+    .fmt-tag {
+      padding: 2px 6px; border-radius: 3px; font-size: 10px;
+      background: var(--cyan-dim); color: var(--cyan);
+      border: 1px solid #00d4ff25; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .ep-error {
+      padding: 6px 14px;
+      background: var(--red-dim); border-top: 1px solid #ff174425;
+      font-size: 11px; color: var(--red);
+    }
+
+    /* ── Timeline ── */
     .timeline-section { margin-top: 16px; }
-    .timeline-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
-    .timeline { display: flex; gap: 2px; height: 24px; align-items: stretch; }
-    .timeline-bar {
-      flex: 1; border-radius: 2px; min-width: 2px; position: relative;
-      cursor: default; transition: opacity 0.15s;
-    }
-    .timeline-bar:hover { opacity: 0.8; }
-    .timeline-bar-ok { background: var(--success); }
-    .timeline-bar-degraded { background: var(--amber); }
-    .timeline-bar-down { background: var(--red); }
-    .timeline-bar-none { background: #111827; }
-    .timeline-meta { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 4px; }
-
-    /* ── Tooltip ── */
-    .timeline-bar[data-tip]:hover::after {
+    .timeline-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 7px; }
+    .timeline { display: flex; gap: 2px; height: 20px; align-items: stretch; }
+    .t-bar { flex: 1; border-radius: 2px; min-width: 2px; position: relative; cursor: default; transition: opacity 0.15s; }
+    .t-bar:hover { opacity: 0.75; }
+    .t-ok   { background: var(--success); }
+    .t-deg  { background: var(--amber); }
+    .t-down { background: var(--red); }
+    .t-none { background: #111827; }
+    .t-bar[data-tip]:hover::after {
       content: attr(data-tip);
-      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-      background: #1a2744; color: var(--text); padding: 4px 8px; border-radius: 4px;
-      font-size: 10px; white-space: nowrap; z-index: 10; pointer-events: none;
-      border: 1px solid #2a3f5f;
+      position: absolute; bottom: calc(100% + 5px); left: 50%; transform: translateX(-50%);
+      background: #1a2744; color: var(--text); padding: 3px 7px; border-radius: 4px;
+      font-size: 10px; white-space: nowrap; z-index: 10;
+      border: 1px solid #2a3f5f; pointer-events: none;
     }
+    .timeline-ends { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 4px; }
 
-    /* ── Loading state ── */
+    /* ── Loading / empty ── */
     .loading-wrap { text-align: center; padding: 80px 20px; }
-    .loading-spinner { width: 24px; height: 24px; border: 3px solid var(--green-dim); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-bottom: 16px; }
+    .loading-spinner { width: 24px; height: 24px; border: 3px solid var(--cyan-dim); border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; margin-bottom: 16px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-text { color: var(--muted); font-size: 12px; }
-
-    /* ── Empty state ── */
     .empty-state { text-align: center; padding: 80px 20px; color: var(--muted); }
-    .empty-icon { font-size: 48px; margin-bottom: 16px; }
     .empty-title { font-family: var(--display); font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
     .empty-desc { font-size: 12px; line-height: 1.8; max-width: 400px; margin: 0 auto; }
 
-    /* ── Footer note ── */
-    .footer-note { text-align: center; margin-top: 40px; font-size: 11px; color: var(--muted); line-height: 1.8; }
-    .footer-note a { color: var(--green); text-decoration: none; }
-    .footer-note a:hover { text-decoration: underline; }
-
-    /* ── Legend ── */
-    .legend { display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    /* ── Footer ── */
+    .footer { text-align: center; margin-top: 48px; font-size: 11px; color: var(--muted); line-height: 2; }
+    .footer a { color: var(--cyan); }
   </style>
 </head>
 <body>
 <div class="app">
 
   <header>
-    <div class="header-row">
-      <div>
-        <div class="logo"><a href="/">The Closed <span>Circuit</span></a><span class="cursor"></span></div>
-        <div class="tagline">Provider Status Monitor</div>
-        <a href="/" class="nav-back">← All Tools</a>
-      </div>
-      <div class="spacer"></div>
-      <span class="logo-gradient">📡 Live Status</span>
+    <div>
+      <div class="logo"><a href="/">The Closed <span>Circuit</span></a><span class="cursor"></span></div>
+      <div class="tagline">Provider Status Monitor</div>
+      <a href="/" class="nav-back">← All Tools</a>
+    </div>
+    <div class="header-right">
+      <div class="live-dot"></div>
+      <span id="refresh-label">Loading…</span>
     </div>
   </header>
 
@@ -187,22 +230,20 @@
     </div>
   </div>
 
-  <div class="footer-note">
-    Automated checks run every hour · Data retained for 7 days ·
+  <div class="footer">
+    Checks run hourly · API auth only — stream availability not tested ·
     <a href="https://github.com/cage47/IPTV_CDN_Tester" target="_blank">GitHub</a> ·
     <a href="https://discord.gg/wXAtrTddkV" target="_blank">Discord</a>
   </div>
+
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// Config
-// ─────────────────────────────────────────────
-const REFRESH_INTERVAL = 60_000; // 60s
+const REFRESH_INTERVAL = 60_000;
 const HISTORY_HOURS = 24;
 
 // ─────────────────────────────────────────────
-// Fetch data
+// Fetch
 // ─────────────────────────────────────────────
 async function fetchStatus() {
   const [currentRes, historyRes] = await Promise.all([
@@ -223,7 +264,6 @@ function render({ current, history }) {
   if (!current.providers || current.providers.length === 0) {
     container.innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">📡</div>
         <div class="empty-title">No Status Data Yet</div>
         <div class="empty-desc">
           The status monitor hasn't run its first check yet.
@@ -231,213 +271,205 @@ function render({ current, history }) {
         </div>
       </div>
     `;
+    document.getElementById('refresh-label').textContent = 'Awaiting first check';
     return;
   }
 
-  // ── Calculate global status ──
-  let totalOnline = 0, totalChecks = 0, totalBlocked = 0;
+  // ── Global status from auth results ──
+  let totalOk = 0, totalEndpoints = 0;
   current.providers.forEach(p => {
     p.dns.forEach(d => {
-      d.channels.forEach(c => {
-        totalChecks++;
-        if (c.status === 'online') totalOnline++;
-        if (c.status === 'blocked') totalBlocked++;
-      });
+      totalEndpoints++;
+      if (d.authOk) totalOk++;
     });
   });
 
-  const healthPct = totalChecks > 0 ? (totalOnline / totalChecks * 100) : 0;
-  let globalClass, dotClass, globalText;
-  if (healthPct >= 90) {
-    globalClass = 'global-banner-ok'; dotClass = 'global-dot-ok';
-    globalText = 'All Systems Operational';
-  } else if (healthPct >= 50) {
-    globalClass = 'global-banner-degraded'; dotClass = 'global-dot-degraded';
-    globalText = 'Partial Degradation Detected';
-  } else if (totalChecks > 0) {
-    globalClass = 'global-banner-down'; dotClass = 'global-dot-down';
-    globalText = 'Major Outage Detected';
-  } else {
-    globalClass = 'global-banner-unknown'; dotClass = 'global-dot-unknown';
-    globalText = 'Awaiting First Check';
-  }
+  const ratio = totalEndpoints > 0 ? totalOk / totalEndpoints : 0;
+  let bannerClass, dotClass, bannerTitle;
+  if (ratio >= 1)    { bannerClass = 'banner-ok';   dotClass = 'dot-ok';   bannerTitle = 'All Systems Operational'; }
+  else if (ratio > 0){ bannerClass = 'banner-deg';  dotClass = 'dot-deg';  bannerTitle = 'Partial Degradation Detected'; }
+  else if (totalEndpoints > 0) { bannerClass = 'banner-down'; dotClass = 'dot-down'; bannerTitle = 'All Providers Unreachable'; }
+  else               { bannerClass = 'banner-none'; dotClass = 'dot-none'; bannerTitle = 'Awaiting First Check'; }
 
   const lastChecked = current.lastChecked ? timeAgo(current.lastChecked) : 'never';
+  document.getElementById('refresh-label').textContent = `Auto-refresh every 60s · Last check: ${lastChecked}`;
 
   let html = '';
 
-  // ── Global banner ──
   html += `
-    <div class="global-banner ${globalClass}">
-      <div class="global-dot ${dotClass}"></div>
-      <div class="global-text">${globalText}</div>
-      <div class="global-sub">${totalOnline}/${totalChecks} streams healthy · Updated ${lastChecked}</div>
+    <div class="global-banner ${bannerClass}">
+      <div class="banner-dot ${dotClass}"></div>
+      <div class="banner-title">${bannerTitle}</div>
+      <div class="banner-meta">${totalOk} / ${totalEndpoints} endpoints authenticated · Updated ${lastChecked}</div>
     </div>
-  `;
-
-  // ── Refresh bar ──
-  html += `
-    <div class="refresh-bar">
-      <div class="refresh-dot"></div>
-      <span>Auto-refreshes every 60s · Last check: ${lastChecked}</span>
+    <div class="method-note">
+      <strong>What this checks:</strong> Panel API connectivity and account authentication for each provider endpoint.
+      Stream availability is not tested. A provider showing <strong style="color:var(--success)">Online</strong> means its API is reachable and credentials are valid.
     </div>
-  `;
-
-  // ── Legend ──
-  html += `
     <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div> Online</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> CF Blocked</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div> Black Screen</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div> Down / Error</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div> API Online</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Auth Failed</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--muted)"></div> Unreachable / DNS Failed</div>
     </div>
   `;
 
-  // ── Provider cards ──
   current.providers.forEach(provider => {
-    // Overall provider status
-    let provOnline = 0, provTotal = 0, provBlocked = 0, provBlack = 0;
-    provider.dns.forEach(d => {
-      d.channels.forEach(c => {
-        provTotal++;
-        if (c.status === 'online') provOnline++;
-        if (c.status === 'blocked') provBlocked++;
-        if (c.status === 'black') provBlack++;
-      });
-    });
+    const okCount = provider.dns.filter(d => d.authOk).length;
+    const total = provider.dns.length;
+    const pRatio = total > 0 ? okCount / total : 0;
 
     let badgeClass, badgeText;
-    const provPct = provTotal > 0 ? provOnline / provTotal : 0;
-    if (provPct >= 0.9) { badgeClass = 'badge-online'; badgeText = 'Operational'; }
-    else if (provPct >= 0.5) { badgeClass = 'badge-degraded'; badgeText = 'Degraded'; }
-    else if (provBlocked > 0 && provOnline === 0) { badgeClass = 'badge-blocked'; badgeText = 'CF Blocked'; }
-    else { badgeClass = 'badge-down'; badgeText = 'Down'; }
+    if (pRatio >= 1)    { badgeClass = 'badge-ok';   badgeText = 'Operational'; }
+    else if (pRatio > 0){ badgeClass = 'badge-deg';  badgeText = 'Degraded'; }
+    else                { badgeClass = 'badge-down'; badgeText = 'Down'; }
 
     html += `<div class="provider-card">`;
     html += `
       <div class="provider-header">
         <div class="provider-name">${esc(provider.name)}</div>
-        <span class="provider-badge ${badgeClass}">${badgeText}</span>
-        <div class="spacer"></div>
-        <span style="font-size:11px;color:var(--muted)">${provOnline}/${provTotal} streams OK</span>
+        <span class="badge ${badgeClass}"><span class="badge-dot"></span>${badgeText}</span>
+        <div class="provider-meta">${okCount} / ${total} endpoint${total !== 1 ? 's' : ''} OK</div>
       </div>
+      <div class="endpoints">
     `;
 
-    // ── Per-DNS sections ──
-    provider.dns.forEach((dns, dnsIdx) => {
-      const dnsOnline = dns.channels.filter(c => c.status === 'online').length;
-      const dnsTotal = dns.channels.length;
+    provider.dns.forEach(d => {
+      const ok = d.authOk;
+      const msText = d.responseMs != null
+        ? `<span class="ep-ms"><span>${d.responseMs.toLocaleString()}</span> ms</span>`
+        : '';
 
-      // Overall endpoint status icon
-      let statusIcon = '';
-      if (dns.cloudflareBlocked) statusIcon = '<span style="color:var(--red)" title="Cloudflare blocked">🛡️ CF Blocked</span>';
-      else if (!dns.dnsResolves) statusIcon = '<span style="color:var(--red)">❌ DNS Failed</span>';
-      else if (!dns.authOk) statusIcon = '<span style="color:var(--amber)">⚠️ Auth Failed</span>';
-      else if (dnsOnline === dnsTotal) statusIcon = '<span style="color:var(--success)">✓ Online</span>';
-      else statusIcon = '<span style="color:var(--amber)">⚠️ Degraded</span>';
-
-      html += `<div class="dns-section">`;
-      html += `
-        <div class="dns-header">
-          ${statusIcon}
-          <span class="dns-host">Endpoint ${dnsIdx + 1}</span>
-          <span style="font-size:10px;color:var(--muted);margin-left:auto">${dnsOnline}/${dnsTotal} streams</span>
-        </div>
-      `;
-
-      if (dns.channels.length > 0) {
-        html += '<div class="channel-grid">';
-        dns.channels.forEach(ch => {
-          const dotClass = {
-            online: 'ch-dot-online', blocked: 'ch-dot-blocked',
-            black: 'ch-dot-black', error: 'ch-dot-error',
-          }[ch.status] || 'ch-dot-error';
-          const statusLabel = {
-            online: 'OK', blocked: 'Blocked', black: 'Black', error: 'Error',
-          }[ch.status] || 'Error';
-
-          html += `
-            <div class="ch-cell" title="${esc(ch.detail || '')}">
-              <div class="ch-dot ${dotClass}"></div>
-              <span class="ch-name">${esc(ch.name)}</span>
-              <span class="ch-status">${statusLabel}</span>
-            </div>
-          `;
-        });
-        html += '</div>';
+      // Status row
+      let dotCls, labelCls, labelText;
+      if (!d.dnsResolves) {
+        dotCls = 'ep-dot-muted'; labelCls = 'ep-label-fail'; labelText = 'DNS Failed';
+      } else if (ok) {
+        dotCls = 'ep-dot-ok'; labelCls = 'ep-label'; labelText = 'Panel Online';
+      } else {
+        dotCls = 'ep-dot-fail'; labelCls = 'ep-label-fail'; labelText = 'Auth Failed';
       }
 
-      html += '</div>'; // dns-section
+      html += `
+        <div class="endpoint">
+          <div class="endpoint-main">
+            <div class="ep-status">
+              <div class="ep-dot ${dotCls}"></div>
+              <span class="${labelCls}">${labelText}</span>
+            </div>
+            <span class="ep-num">Endpoint ${d.endpoint}</span>
+            ${msText}
+          </div>
+      `;
+
+      // Meta row — only show if we got a real response
+      if (d.dnsResolves) {
+        const acct = d.account;
+        html += `<div class="endpoint-meta">`;
+
+        if (acct) {
+          const statusVal = acct.status || 'Active';
+          const chipCls = statusVal.toLowerCase() === 'active' ? 'ep-chip-active' : 'ep-chip-fail';
+          html += `
+            <div class="ep-chip ${chipCls}">
+              <span class="ep-chip-key">Account</span>
+              <span class="ep-chip-val">${esc(capitalize(statusVal))}</span>
+            </div>
+          `;
+          if (acct.maxConnections != null) {
+            html += `
+              <div class="ep-chip">
+                <span class="ep-chip-key">Connections</span>
+                <span class="ep-chip-val">${acct.maxConnections} max</span>
+              </div>
+            `;
+          }
+          if (acct.formats && acct.formats.length > 0) {
+            html += `<div class="ep-formats">`;
+            acct.formats.forEach(f => {
+              html += `<span class="fmt-tag">${esc(f.toUpperCase())}</span>`;
+            });
+            html += `</div>`;
+          }
+        } else if (!ok) {
+          // Auth failed — no account data
+          html += `
+            <div class="ep-chip ep-chip-fail">
+              <span class="ep-chip-key">Account</span>
+              <span class="ep-chip-val">Error</span>
+            </div>
+          `;
+        }
+
+        html += `</div>`;
+      }
+
+      // Error row
+      if (d.authError) {
+        html += `<div class="ep-error">${esc(d.authError)}</div>`;
+      }
+
+      html += `</div>`; // endpoint
     });
 
-    // ── Uptime timeline from history ──
+    html += `</div>`; // endpoints
+
+    // ── Timeline ──
     const provHistory = getProviderHistory(provider.id, history.history || []);
     if (provHistory.length > 0) {
+      const padded = padTimeline(provHistory, HISTORY_HOURS);
       html += `
         <div class="timeline-section">
           <div class="timeline-label">Uptime — Last 24 hours</div>
           <div class="timeline">
       `;
-
-      // Pad to HISTORY_HOURS slots
-      const padded = padTimeline(provHistory, HISTORY_HOURS);
       padded.forEach(entry => {
-        let barClass, tip;
+        let cls, tip;
         if (!entry) {
-          barClass = 'timeline-bar-none';
-          tip = 'No data';
+          cls = 't-none'; tip = 'No data';
         } else {
-          const pct = entry.total > 0 ? entry.online / entry.total : 0;
-          if (pct >= 0.9) { barClass = 'timeline-bar-ok'; tip = `${Math.round(pct*100)}% healthy`; }
-          else if (pct >= 0.5) { barClass = 'timeline-bar-degraded'; tip = `${Math.round(pct*100)}% healthy`; }
-          else { barClass = 'timeline-bar-down'; tip = `${Math.round(pct*100)}% healthy`; }
+          const r = entry.total > 0 ? entry.ok / entry.total : 0;
+          if (r >= 1)    { cls = 't-ok';   tip = 'All endpoints OK'; }
+          else if (r > 0){ cls = 't-deg';  tip = 'Partial failure'; }
+          else           { cls = 't-down'; tip = 'All endpoints down'; }
           if (entry.timestamp) {
             const d = new Date(entry.timestamp);
             tip += ` · ${d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
           }
         }
-        html += `<div class="timeline-bar ${barClass}" data-tip="${esc(tip)}"></div>`;
+        html += `<div class="t-bar ${cls}" data-tip="${esc(tip)}"></div>`;
       });
-
       html += `
           </div>
-          <div class="timeline-meta">
-            <span>${HISTORY_HOURS}h ago</span>
-            <span>Now</span>
-          </div>
+          <div class="timeline-ends"><span>24h ago</span><span>Now</span></div>
         </div>
       `;
     }
 
-    html += '</div>'; // provider-card
+    html += `</div>`; // provider-card
   });
 
   container.innerHTML = html;
 }
 
 // ─────────────────────────────────────────────
-// Extract per-provider timeline from history
+// History helpers
 // ─────────────────────────────────────────────
 function getProviderHistory(providerId, history) {
   return history.map(entry => {
     const prov = entry.providers.find(p => p.id === providerId);
     if (!prov) return null;
-    let online = 0, blocked = 0, black = 0, error = 0, total = 0;
+    let ok = 0, total = 0;
     prov.dns.forEach(d => {
-      online += d.online || 0;
-      blocked += d.blocked || 0;
-      black += d.black || 0;
-      error += d.error || 0;
-      total += d.total || 0;
+      total++;
+      if (d.authOk) ok++;
     });
-    return { timestamp: entry.timestamp, online, blocked, black, error, total };
-  }).filter(Boolean).reverse(); // oldest first for timeline
+    return { timestamp: entry.timestamp, ok, total };
+  }).filter(Boolean).reverse();
 }
 
 function padTimeline(data, slots) {
   if (data.length >= slots) return data.slice(-slots);
-  const padding = new Array(slots - data.length).fill(null);
-  return [...padding, ...data];
+  return [...new Array(slots - data.length).fill(null), ...data];
 }
 
 // ─────────────────────────────────────────────
@@ -454,6 +486,7 @@ function timeAgo(ts) {
 }
 
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 
 // ─────────────────────────────────────────────
 // Init + auto-refresh
@@ -466,7 +499,6 @@ async function init() {
     console.error('Failed to fetch status:', e);
     document.getElementById('content').innerHTML = `
       <div class="empty-state">
-        <div class="empty-icon">⚠️</div>
         <div class="empty-title">Connection Error</div>
         <div class="empty-desc">Could not fetch status data. Will retry automatically.</div>
       </div>
