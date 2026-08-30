@@ -1,5 +1,8 @@
 import { kv } from '@vercel/kv';
 
+const CF_WORKER_URL = process.env.CF_PROXY_URL || 'https://tv-proxy.ttpcountermeasures.workers.dev';
+const CF_PROXY_SECRET = process.env.CF_PROXY_SECRET || '';
+
 // ─────────────────────────────────────────────
 // Cron handler — runs hourly via Vercel Cron
 // Reads provider config from env, checks each one, stores results in KV
@@ -117,16 +120,37 @@ export default async function handler(req, res) {
         };
 
         try {
-          const streamRes = await fetchWithTimeout(streamUrl, {
-            method: 'GET',
+          // Route through Cloudflare Worker to avoid datacenter IP blocks (HTTP 511)
+          const proxyRes = await fetchWithTimeout(CF_WORKER_URL, {
+            method: 'POST',
             headers: {
-              'User-Agent': 'TiviMate/4.4.0 (Linux; Android 11)',
+              'Content-Type': 'application/json',
+              'X-Proxy-Secret': CF_PROXY_SECRET,
             },
-          }, 12000);
+            body: JSON.stringify({
+              url: streamUrl,
+              method: 'GET',
+              headers: {
+                'User-Agent': 'TiviMate/4.4.0 (Linux; Android 11)',
+              },
+            }),
+          }, 15000);
 
-          const contentType = streamRes.headers.get('content-type') || '';
-          const server = streamRes.headers.get('server') || '';
-          const cfRay = streamRes.headers.get('cf-ray') || '';
+          // Extract original status from proxy response headers
+          const originalStatus = parseInt(proxyRes.headers.get('x-original-status')) || proxyRes.status;
+          const contentType = proxyRes.headers.get('x-original-content-type') ||
+                              proxyRes.headers.get('content-type') || '';
+          const server = proxyRes.headers.get('x-original-server') || '';
+
+          const streamRes = {
+            status: originalStatus,
+            headers: { get: (name) => {
+              if (name === 'content-type') return contentType;
+              if (name === 'server') return server;
+              return '';
+            }},
+            body: proxyRes.body,
+          };
 
           // Read up to 256KB for analysis
           const chunks = [];
