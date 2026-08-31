@@ -452,7 +452,8 @@ async function displayXtreamResults(data, baseUrl) {
   const maxConn = info.max_connections || '1';
   const activeConn = info.active_cons || '0';
   const realUrl = baseUrl;
-  const port = serverInfo.port || new URL(baseUrl).port || '80';
+  let port = serverInfo.port || '80';
+  try { port = serverInfo.port || new URL(baseUrl).port || '80'; } catch { /* use default */ }
   const timezone = serverInfo.timezone || 'N/A';
 
   const resultsGrid = document.getElementById('xtreamResultsGrid');
