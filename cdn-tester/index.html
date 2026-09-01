@@ -543,7 +543,7 @@ async function handleRun() {
     log(`Testing CDN: ${cdn}`, 'info');
     document.getElementById('cdnBeingTested').textContent = `Current: ${cdn}`;
 
-    const cdnResult = { cdn, latencies: [], jitters: [], throughputs: [], successes: 0, geo: null };
+    const cdnResult = { cdn, latencies: [], jitters: [], throughputs: [], successes: 0, blockedCount: 0, apiLatencies: [], geo: null };
 
     // Geo lookup (once per CDN)
     try {
@@ -557,13 +557,15 @@ async function handleRun() {
 
     for (const ch of selectedChannels) {
       const streamUrl = `${cdn}/${username}/${password}/${ch.stream_id}`;
-      const { latency, jitter, throughput, ok } = await testStream(streamUrl);
+      const { latency, jitter, throughput, ok, blocked } = await testStream(streamUrl);
       if (ok) {
         cdnResult.successes++;
-        if (latency !== null) cdnResult.latencies.push(latency);
-        if (jitter  !== null) cdnResult.jitters.push(jitter);
+        if (blocked) cdnResult.blockedCount++;
+        if (latency   !== null) cdnResult.latencies.push(latency);
+        if (jitter    !== null) cdnResult.jitters.push(jitter);
         if (throughput !== null) cdnResult.throughputs.push(throughput);
-        log(`  ✓ ${ch.name}  lat:${latency ? latency.toFixed(1)+'ms' : 'n/a'}  jitter:${jitter ? jitter.toFixed(1)+'ms' : 'n/a'}  tput:${throughput ? throughput.toFixed(1)+'Mbps' : 'n/a'}`, 'ok');
+        const tputStr = throughput ? throughput.toFixed(1) + 'Mbps' : blocked ? 'blocked' : 'n/a';
+        log(`  ${blocked ? '⊘' : '✓'} ${ch.name}  lat:${latency.toFixed(1)}ms  jitter:${jitter.toFixed(1)}ms  tput:${tputStr}`, blocked ? 'warn' : 'ok');
       } else {
         log(`  ✗ ${ch.name}  — unreachable`, 'err');
       }
@@ -571,6 +573,25 @@ async function handleRun() {
       setProgress((done / total) * 100, `Testing ${ch.name}…`);
     }
     state.results.push(cdnResult);
+  }
+
+  // ── API latency fallback when streams are blocked ──
+  const totalTests = cdnList.length * selectedChannels.length;
+  const totalBlocked = state.results.reduce((sum, r) => sum + r.blockedCount, 0);
+  if (totalTests > 0 && totalBlocked / totalTests > 0.5) {
+    log('Streams blocked by provider — measuring API latency as fallback…', 'warn');
+    for (const result of state.results) {
+      log(`  API ping: ${result.cdn}`, 'info');
+      const apiUrl = `${result.cdn}/player_api.php`;
+      for (let i = 0; i < 5; i++) {
+        const ping = await pingUrl(apiUrl);
+        if (ping) result.apiLatencies.push(ping.ms);
+        await sleep(100);
+      }
+      if (result.apiLatencies.length) {
+        log(`  ↳ API avg: ${avg(result.apiLatencies).toFixed(1)}ms`, 'ok');
+      }
+    }
   }
 
   log('All tests complete.', 'ok');
@@ -587,32 +608,38 @@ async function handleRun() {
 async function testStream(url) {
   const PING_COUNT = 5;
   const THROUGHPUT_MS = 4000;
+  const BLOCK_STATUSES = new Set([401, 403, 511]);
 
-  // 1. Latency pings
+  // 1. Latency pings — record timing even for blocked responses
   const pings = [];
+  let blockedPings = 0;
   for (let i = 0; i < PING_COUNT; i++) {
-    const t = await pingUrl(url);
-    if (t !== null) pings.push(t);
+    const result = await pingUrl(url);
+    if (result !== null) {
+      pings.push(result.ms);
+      if (BLOCK_STATUSES.has(result.status)) blockedPings++;
+    }
     await sleep(100);
   }
 
-  if (pings.length === 0) return { latency: null, jitter: null, throughput: null, ok: false };
+  if (pings.length === 0) return { latency: null, jitter: null, throughput: null, ok: false, blocked: false };
 
   const avgLat = avg(pings);
   const jitter = stdDev(pings);
+  const blocked = blockedPings >= Math.ceil(pings.length / 2);
 
-  // 2. Throughput (via proxy — measures server-to-CDN bandwidth)
-  const throughput = await measureThroughput(url, THROUGHPUT_MS);
+  // 2. Skip throughput for blocked streams — the 4-second window won't yield data
+  const throughput = blocked ? null : await measureThroughput(url, THROUGHPUT_MS);
 
-  return { latency: avgLat, jitter, throughput, ok: true };
+  return { latency: avgLat, jitter, throughput, ok: true, blocked };
 }
 
 async function pingUrl(url) {
   try {
     const proxyUrl = '/api/test-proxy?url=' + encodeURIComponent(url) + '&method=HEAD&_t=' + Date.now();
     const start = performance.now();
-    await fetch(proxyUrl, { cache: 'no-store' });
-    return performance.now() - start;
+    const res = await fetch(proxyUrl, { cache: 'no-store' });
+    return { ms: performance.now() - start, status: res.status };
   } catch { return null; }
 }
 
@@ -644,25 +671,61 @@ async function measureThroughput(url, durationMs) {
 // Render results
 // ─────────────────────────────────────────────
 function renderResults() {
-  // Score = weighted: latency 50%, success 30%, throughput 20%
+  // Detect if provider is blocking datacenter IPs from stream access
+  const totalTests = state.results.reduce((sum, r) => sum + state.selectedChannels.length, 0);
+  const totalBlocked = state.results.reduce((sum, r) => sum + r.blockedCount, 0);
+  const isBlocked = totalTests > 0 && totalBlocked / totalTests > 0.5;
+
+  // Score: latency 50% + success 30% + throughput 20% (normal)
+  //        latency 70% + jitter-stability 30%            (blocked — no throughput data)
   const scored = state.results.map(r => {
-    const lat  = r.latencies.length  ? avg(r.latencies) : 9999;
-    const jit  = r.jitters.length    ? avg(r.jitters)   : 0;
-    const tput = r.throughputs.length ? avg(r.throughputs) : 0;
+    const latSrc = (isBlocked && r.apiLatencies.length) ? r.apiLatencies : r.latencies;
+    const lat  = latSrc.length        ? avg(latSrc)         : 9999;
+    const jit  = r.jitters.length     ? avg(r.jitters)      : 0;
+    const tput = r.throughputs.length ? avg(r.throughputs)  : 0;
     const succ = r.successes / state.selectedChannels.length;
-    // Lower latency = better, normalise
+
     const latScore  = Math.max(0, 100 - lat);
     const tputScore = Math.min(100, tput * 5);
     const succScore = succ * 100;
-    const score = latScore * 0.5 + succScore * 0.3 + tputScore * 0.2;
+    const jitScore  = Math.max(0, 100 - jit * 2);
+
+    const score = isBlocked
+      ? latScore * 0.7 + jitScore * 0.3
+      : latScore * 0.5 + succScore * 0.3 + tputScore * 0.2;
+
     return { ...r, avgLat: lat, avgJitter: jit, avgTput: tput, succ, score };
   }).sort((a, b) => b.score - a.score);
 
   const maxLat  = Math.max(...scored.map(r => r.avgLat).filter(v => v < 9999), 1);
   const maxTput = Math.max(...scored.map(r => r.avgTput), 0.01);
 
+  // Update column headers for blocked mode
+  const thLatency = document.querySelector('#resultsTable thead th:nth-child(5)');
+  const thSuccess = document.querySelector('#resultsTable thead th:nth-child(8)');
+  if (thLatency) thLatency.textContent = isBlocked ? 'API Latency' : 'Avg Latency';
+  if (thSuccess) thSuccess.textContent = isBlocked ? 'Blocked' : 'Success';
+
   const tbody = document.getElementById('resultsBody');
   tbody.innerHTML = '';
+
+  // Blocked banner
+  if (isBlocked) {
+    const banner = document.createElement('tr');
+    banner.innerHTML = `
+      <td colspan="9" style="padding-bottom:10px">
+        <div style="background:#ffab0012;border:1px solid #ffab0035;border-radius:6px;padding:10px 14px;font-size:11px;line-height:1.8;color:var(--text)">
+          <span style="color:var(--amber);font-weight:600">⊘ Stream access blocked</span>
+          &nbsp;— this provider blocks datacenter IPs from fetching .ts streams.
+          Latency is measured via <code style="font-size:10px">player_api.php</code> instead.
+          Throughput is unavailable. Ranking reflects CDN routing performance only;
+          stream quality on a residential connection may differ from these results.
+        </div>
+      </td>
+    `;
+    tbody.appendChild(banner);
+  }
+
   scored.forEach((r, i) => {
     const rank = i + 1;
     const rankClass = rank <= 3 ? `rank-${rank}` : 'rank-n';
@@ -675,6 +738,10 @@ function renderResults() {
     const hosting = r.geo?.org?.replace(/^AS\d+ /, '') || 'Unknown';
     const location = [r.geo?.city, r.geo?.country].filter(Boolean).join(', ') || '—';
 
+    const succCell = isBlocked
+      ? `<span style="color:var(--amber)">${r.blockedCount}</span>/${state.selectedChannels.length}`
+      : `${r.successes}/${state.selectedChannels.length}`;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><span class="rank-badge ${rankClass}">${rank}</span></td>
@@ -682,22 +749,28 @@ function renderResults() {
       <td><span class="hosting-badge">${escHtml(hosting.slice(0,20))}</span></td>
       <td>${escHtml(location)}</td>
       <td>
-        ${latOk ? `<div class="perf-bar"><div class="perf-fill ${latColor}" style="width:${latPct.toFixed(1)}px;max-width:60px;width:${Math.max(latPct * 0.6, 2)}px"></div>${r.avgLat.toFixed(1)}ms</div>` : '<span class="na">n/a</span>'}
+        ${latOk ? `<div class="perf-bar"><div class="perf-fill ${latColor}" style="width:${Math.max(latPct * 0.6, 2)}px;max-width:60px"></div>${r.avgLat.toFixed(1)}ms</div>` : '<span class="na">n/a</span>'}
       </td>
-      <td>${r.avgJitter > 0 ? r.avgJitter.toFixed(1)+'ms' : '<span class="na">n/a</span>'}</td>
+      <td>${r.avgJitter > 0 ? r.avgJitter.toFixed(1) + 'ms' : '<span class="na">n/a</span>'}</td>
       <td>
-        ${r.avgTput > 0 ? `<div class="perf-bar"><div class="perf-fill ${tputColor}" style="width:${Math.max(tputPct * 0.6, 2)}px;max-width:60px"></div>${r.avgTput.toFixed(1)} Mbps</div>` : '<span class="na">n/a*</span>'}
+        ${r.avgTput > 0 ? `<div class="perf-bar"><div class="perf-fill ${tputColor}" style="width:${Math.max(tputPct * 0.6, 2)}px;max-width:60px"></div>${r.avgTput.toFixed(1)} Mbps</div>` : '<span class="na">n/a</span>'}
       </td>
-      <td>${r.successes}/${state.selectedChannels.length}</td>
+      <td>${succCell}</td>
       <td><span class="score-pill ${scoreClass}">${r.score.toFixed(0)}</span></td>
     `;
     tbody.appendChild(tr);
   });
 
-  // Footnote if any throughput was blocked
-  if (scored.some(r => r.avgTput === 0)) {
+  // Footnote
+  const noteText = isBlocked
+    ? 'Latency reflects panel API (player_api.php) response times, not stream delivery. Relative CDN ranking is still meaningful. For throughput data, run from a residential connection.'
+    : scored.some(r => r.avgTput === 0)
+      ? 'Throughput unavailable for one or more CDNs. Latency includes proxy overhead — relative comparison between CDNs remains accurate.'
+      : null;
+
+  if (noteText) {
     const note = document.createElement('tr');
-    note.innerHTML = `<td colspan="9" style="color:var(--muted);font-size:10px;padding-top:12px">* Throughput unavailable for this CDN. Latency values include proxy overhead — relative comparison between CDNs is still accurate.</td>`;
+    note.innerHTML = `<td colspan="9" style="color:var(--muted);font-size:10px;padding-top:12px">${noteText}</td>`;
     tbody.appendChild(note);
   }
 
@@ -708,15 +781,20 @@ function renderResults() {
 // CSV Export
 // ─────────────────────────────────────────────
 function exportCSV() {
-  const rows = [['cdn_endpoint','hosting','location','avg_latency_ms','jitter_ms','throughput_mbps','success_rate','score']];
+  const totalTests = state.results.reduce((sum, r) => sum + state.selectedChannels.length, 0);
+  const totalBlocked = state.results.reduce((sum, r) => sum + r.blockedCount, 0);
+  const isBlocked = totalTests > 0 && totalBlocked / totalTests > 0.5;
+
+  const rows = [['cdn_endpoint','hosting','location','avg_latency_ms','jitter_ms','throughput_mbps','success_rate','blocked_count','score']];
   state.results.forEach(r => {
-    const lat  = r.latencies.length  ? avg(r.latencies).toFixed(2)  : '';
-    const jit  = r.jitters.length    ? avg(r.jitters).toFixed(2)    : '';
-    const tput = r.throughputs.length ? avg(r.throughputs).toFixed(2) : '';
+    const latSrc = (isBlocked && r.apiLatencies.length) ? r.apiLatencies : r.latencies;
+    const lat  = latSrc.length         ? avg(latSrc).toFixed(2)          : '';
+    const jit  = r.jitters.length      ? avg(r.jitters).toFixed(2)       : '';
+    const tput = r.throughputs.length  ? avg(r.throughputs).toFixed(2)   : '';
     const succ = `${r.successes}/${state.selectedChannels.length}`;
     const hosting  = r.geo?.org || '';
     const location = [r.geo?.city, r.geo?.country].filter(Boolean).join(', ');
-    rows.push([r.cdn, hosting, location, lat, jit, tput, succ, '']);
+    rows.push([r.cdn, hosting, location, lat, jit, tput, succ, r.blockedCount, '']);
   });
   const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
