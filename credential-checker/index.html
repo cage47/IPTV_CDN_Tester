@@ -412,8 +412,9 @@ document.getElementById('xtreamCheckBtn').addEventListener('click', async () => 
 
     const data = await response.json();
     
-    // Check if valid
-    if (data.user_info) {
+    // auth:0 means credentials rejected — some servers return {user_info:{auth:0}}
+    // for invalid accounts rather than omitting user_info entirely
+    if (data.user_info && data.user_info.auth !== 0) {
       displayXtreamResults(data, baseUrl);
     } else {
       alert('Invalid credentials or API response');

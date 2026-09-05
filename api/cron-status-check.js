@@ -65,7 +65,8 @@ export default async function handler(req, res) {
 
         if (authRes.ok) {
           const data = await authRes.json().catch(() => null);
-          if (data && data.user_info) {
+          // auth:0 = rejected — some panels return {user_info:{auth:0}} instead of omitting user_info
+          if (data && data.user_info && data.user_info.auth !== 0) {
             dnsResult.authOk = true;
             dnsResult.account = {
               status: data.user_info.status || null,
