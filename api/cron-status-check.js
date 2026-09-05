@@ -1,4 +1,5 @@
 import { kv } from '@vercel/kv';
+import { parseXtreamAuth } from '../lib/xtream.js';
 
 // ─────────────────────────────────────────────
 // Cron handler — runs hourly via Vercel Cron
@@ -65,21 +66,12 @@ export default async function handler(req, res) {
 
         if (authRes.ok) {
           const data = await authRes.json().catch(() => null);
-          // auth:0 = rejected — some panels return {user_info:{auth:0}} instead of omitting user_info
-          if (data && data.user_info && data.user_info.auth !== 0) {
+          const auth = parseXtreamAuth(data);
+          if (auth.ok) {
             dnsResult.authOk = true;
-            dnsResult.account = {
-              status: data.user_info.status || null,
-              maxConnections: data.user_info.max_connections != null
-                ? parseInt(data.user_info.max_connections, 10)
-                : null,
-              formats: Array.isArray(data.user_info.allowed_output_formats)
-                ? data.user_info.allowed_output_formats
-                : [],
-              expDate: data.user_info.exp_date || null,
-            };
+            dnsResult.account = auth.account;
           } else {
-            dnsResult.authError = 'Invalid API response (no user_info)';
+            dnsResult.authError = auth.reason;
           }
         } else {
           const contentType = authRes.headers.get('content-type') || '';

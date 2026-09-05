@@ -340,6 +340,37 @@ document.querySelectorAll('.tab').forEach(tab => {
 // ─────────────────────────────────────────────
 // SSRF Protection
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// Xtream API response validation
+// Inline copy of lib/xtream.js — keep in sync when changing either.
+// ─────────────────────────────────────────────
+const INACTIVE_STATUSES = new Set(['expired', 'disabled', 'banned', 'suspended', 'inactive']);
+
+function parseXtreamAuth(data) {
+  if (!data || typeof data !== 'object') return { ok: false, reason: 'Invalid response format' };
+  const ui = data.user_info;
+  if (!ui || typeof ui !== 'object') return { ok: false, reason: 'No user_info in response' };
+  if (ui.auth === 0 || ui.auth === '0' || ui.auth === false) return { ok: false, reason: 'Credentials rejected (auth:0)' };
+  if (!ui.username) return { ok: false, reason: 'Incomplete response (missing username)' };
+
+  const rawStatus = ui.status ? String(ui.status).toLowerCase() : 'unknown';
+  const expDate = normalizeExpDate(ui.exp_date);
+  const maxConnections = ui.max_connections != null ? parseInt(ui.max_connections, 10) : null;
+  const formats = Array.isArray(ui.allowed_output_formats) ? ui.allowed_output_formats : [];
+
+  return { ok: true, account: { status: rawStatus, maxConnections, formats, expDate } };
+}
+
+function normalizeExpDate(expDate) {
+  if (!expDate || expDate === '0' || expDate === 0) return null;
+  const s = String(expDate);
+  if (/^\d{9,11}$/.test(s)) return new Date(parseInt(s, 10) * 1000);
+  return new Date(s);
+}
+
+// ─────────────────────────────────────────────
+// SSRF Protection
+// ─────────────────────────────────────────────
 function validateUrl(urlString) {
   let url;
   try {
@@ -411,13 +442,11 @@ document.getElementById('xtreamCheckBtn').addEventListener('click', async () => 
     }
 
     const data = await response.json();
-    
-    // auth:0 means credentials rejected — some servers return {user_info:{auth:0}}
-    // for invalid accounts rather than omitting user_info entirely
-    if (data.user_info && data.user_info.auth !== 0) {
-      displayXtreamResults(data, baseUrl);
+    const auth = parseXtreamAuth(data);
+    if (auth.ok) {
+      displayXtreamResults(auth.account, data.server_info || {}, baseUrl);
     } else {
-      alert('Invalid credentials or API response');
+      alert(`Authentication failed: ${auth.reason}`);
     }
 
   } catch (error) {
@@ -428,30 +457,22 @@ document.getElementById('xtreamCheckBtn').addEventListener('click', async () => 
   }
 });
 
-async function displayXtreamResults(data, baseUrl) {
-  const info = data.user_info || {};
-  const serverInfo = data.server_info || {};
-  
-  // Determine status
-  let status = 'valid';
-  let statusText = 'Active';
-  
-  if (info.status === 'Expired' || info.exp_date === 'expired') {
-    status = 'expired';
-    statusText = 'Expired';
-  } else if (info.status !== 'Active' && info.active_cons !== undefined) {
-    status = 'invalid';
-    statusText = 'Inactive';
-  }
+async function displayXtreamResults(account, serverInfo, baseUrl) {
+  // account comes from parseXtreamAuth — status is already normalized to lowercase
+  const inactive = INACTIVE_STATUSES.has(account.status);
+  const statusClass = inactive ? (account.status === 'expired' ? 'expired' : 'invalid') : 'valid';
+  const statusText = account.status.charAt(0).toUpperCase() + account.status.slice(1);
 
-  let expiry = info.exp_date || 'N/A';
-  if (expiry !== 'N/A' && expiry !== 'expired' && !isNaN(expiry)) {
-    const d = new Date(Number(expiry) * 1000);
-    expiry = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-           + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  let expiry = 'N/A';
+  if (account.expDate) {
+    const d = account.expDate instanceof Date ? account.expDate : new Date(account.expDate);
+    if (!isNaN(d)) {
+      expiry = d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+             + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    }
   }
-  const maxConn = info.max_connections || '1';
-  const activeConn = info.active_cons || '0';
+  const maxConn = account.maxConnections ?? 'N/A';
+  const activeConn = 'N/A';
   const realUrl = baseUrl;
   let port = serverInfo.port || '80';
   try { port = serverInfo.port || new URL(baseUrl).port || '80'; } catch { /* use default */ }
@@ -461,7 +482,7 @@ async function displayXtreamResults(data, baseUrl) {
   resultsGrid.innerHTML = `
     <div class="result-row">
       <div class="result-label">Status</div>
-      <div class="result-value"><span class="status-badge status-${status}">${statusText}</span></div>
+      <div class="result-value"><span class="status-badge status-${statusClass}">${statusText}</span></div>
     </div>
     <div class="result-row">
       <div class="result-label">Expiry Date</div>
